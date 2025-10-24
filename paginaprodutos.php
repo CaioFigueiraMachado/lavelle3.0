@@ -6,13 +6,13 @@ if (!isset($_SESSION['carrinho'])) {
     $_SESSION['carrinho'] = [];
 }
 
-// Verificar se usuário está logado
+// CORREÇÃO: Verificar se usuário está logado - mesma verificação da index.php
 $usuarioLogado = false;
 $usuarioNome = "";
 
-if (isset($_SESSION['usuario_id'])) {
+if (isset($_SESSION['id'])) { // CORREÇÃO: Usar 'id' em vez de 'usuario_id'
     $usuarioLogado = true;
-    $usuarioNome = $_SESSION['usuario_nome'];
+    $usuarioNome = $_SESSION['nome']; // CORREÇÃO: Usar 'nome' em vez de 'usuario_nome'
 }
 
 // Processar adição ao carrinho
@@ -330,7 +330,6 @@ if (!empty($_SESSION['carrinho'])) {
     object-fit: cover;
     transition: transform 0.5s;
 }
-
 .product-card:hover .product-img img {
     transform: scale(1.1);
 }
@@ -344,7 +343,8 @@ if (!empty($_SESSION['carrinho'])) {
     width: 100%;
     height: 500px;
     border-radius: 10px;
-    object-fit: cover;
+    object-fit: contain;
+    background-color: #f5f5f5;
 }
 
 /* Modal do Carrinho */
@@ -440,6 +440,11 @@ if (!empty($_SESSION['carrinho'])) {
             border-left: 1px solid #eee;
         }
         
+        .user-menu a {
+            font-size: 13px;
+            padding: 6px 12px;
+        }
+        
         .user-menu a.profile-link {
             background-color: #f5f5f5;
             color: #8b7355;
@@ -527,6 +532,7 @@ if (!empty($_SESSION['carrinho'])) {
         .category-btn.active, .category-btn:hover {
             background-color: #000;
             color: white;
+            border-color: #000;
         }
         
         .filters {
@@ -1358,9 +1364,10 @@ if (!empty($_SESSION['carrinho'])) {
                         <li><a href="sobre.php">SOBRE</a></li>
                         <li><a href="contato.php">CONTATO</a></li>
                         
-                        <!-- Menu do Usuário -->
+                        <!-- Menu do Usuário - CORRIGIDO -->
                         <?php if ($usuarioLogado): ?>
                             <div class="user-menu">
+                                <span style="color: #8b7355; font-weight: 500;">Olá, <?php echo htmlspecialchars($usuarioNome); ?></span>
                                 <li><a href="perfil.php" class="profile-link">MEU PERFIL</a></li>
                                 <li>
                                     <button class="cart-icon" onclick="openCartModal()">
@@ -1375,7 +1382,7 @@ if (!empty($_SESSION['carrinho'])) {
                         <?php else: ?>
                             <div class="user-menu">
                                 <li><a href="login.php">ENTRAR</a></li>
-                                <li><a href="cadastro.php">CADASTRAR</a></li>
+                                <li><a href="cadastro.php">CADASTRE-SE</a></li>
                                 <li>
                                     <button class="cart-icon" onclick="openCartModal()">
                                         CARRINHO
@@ -1575,7 +1582,7 @@ if (!empty($_SESSION['carrinho'])) {
                 <div class="payment-methods">
                     <div class="payment-method" onclick="selectPaymentMethod('credit')">
                         <input type="radio" name="metodo_pagamento" value="credit" id="credit" required>
-                        <div class="payment-method-icon">💳</div>
+                        <div class="payment-method-icon"></div>
                         <div class="payment-method-info">
                             <div class="payment-method-name">Cartão</div>
                             <div class="payment-method-desc">Parcelamento em até 12x</div>
@@ -1584,7 +1591,7 @@ if (!empty($_SESSION['carrinho'])) {
                     
                     <div class="payment-method" onclick="selectPaymentMethod('pix')">
                         <input type="radio" name="metodo_pagamento" value="pix" id="pix">
-                        <div class="payment-method-icon">📱</div>
+                        <div class="payment-method-icon"></div>
                         <div class="payment-method-info">
                             <div class="payment-method-name">PIX</div>
                             <div class="payment-method-desc">15% de desconto</div>
@@ -1593,7 +1600,7 @@ if (!empty($_SESSION['carrinho'])) {
 
                     <div class="payment-method" onclick="selectPaymentMethod('boleto')">
                         <input type="radio" name="metodo_pagamento" value="boleto" id="boleto">
-                        <div class="payment-method-icon">📄</div>
+                        <div class="payment-method-icon"></div>
                         <div class="payment-method-info">
                             <div class="payment-method-name">Boleto Bancário</div>
                             <div class="payment-method-desc">Pagamento em 1x</div>

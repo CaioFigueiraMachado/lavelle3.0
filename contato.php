@@ -567,7 +567,7 @@ if (isset($_SESSION['usuario_id'])) {
                 <nav>
                     <ul>
                         <li><a href="index.php">INÍCIO</a></li>
-                        <li><a href="produtos.php">PRODUTOS</a></li>
+                        <li><a href="paginaprodutos.php">PRODUTOS</a></li>
                         <li><a href="sobre.php">SOBRE</a></li>
                         <li><a href="contato.php" style="color: #8b7355;">CONTATO</a></li>
                         
@@ -578,10 +578,7 @@ if (isset($_SESSION['usuario_id'])) {
                                 <li><a href="logout.php">SAIR</a></li>
                             </div>
                         <?php else: ?>
-                            <div class="user-menu">
-                                <li><a href="login.php">ENTRAR</a></li>
-                                <li><a href="cadastro.php">CADASTRAR</a></li>
-                            </div>
+                           
                         <?php endif; ?>
                     </ul>
                 </nav>
@@ -650,27 +647,27 @@ if (isset($_SESSION['usuario_id'])) {
                 
                 <div class="contact-info">
                     <div class="info-card fade-in">
-                        <h3>📍 Endereço</h3>
+                        <h3> Endereço</h3>
                         <p>Av. Monsenhor Theodomiro Lobo, 100</p>
                         <p>Parque Res. Maria Elmira, Caçapava - SP</p>
                         <p>CEP: 12285-050</p>
                     </div>
                     
                     <div class="info-card fade-in">
-                        <h3>📞 Telefones</h3>
+                        <h3> Telefones</h3>
                         <p><a href="tel:+5512998516345">(12) 99851-6345</a> - WhatsApp</p>
                         <p>Atendimento: Segunda a Sexta, 9h às 18h</p>
                     </div>
                     
                     <div class="info-card fade-in">
-                        <h3>✉️ E-mail</h3>
+                        <h3> E-mail</h3>
                         <p><a href="mailto:contato@lavelle.com.br">contato@lavelle.com.br</a></p>
                         <p><a href="mailto:vendas@lavelle.com.br">vendas@lavelle.com.br</a></p>
                         <p>Resposta em até 24 horas</p>
                     </div>
                     
                     <div class="info-card fade-in">
-                        <h3>🕒 Horário de Funcionamento</h3>
+                        <h3> Horário de Funcionamento</h3>
                         <p><strong>Segunda a Sexta:</strong> 9h às 18h</p>
                         <p><strong>Sábado:</strong> 9h às 13h</p>
                         <p><strong>Domingo:</strong> Fechado</p>

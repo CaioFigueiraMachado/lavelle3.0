@@ -1,34 +1,68 @@
 <?php
-// login.php - CORRIGIDO
+// login.php (Página de Login)
+
 session_start();
-include 'conexao.php';
 
-$empresa = "LAVELLE";
-$mensagem = "";
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $email = trim($_POST['email']);
-    $senha = $_POST['senha'];
+// Incluir e verificar conexão
+try {
+    include('conexao.php');
     
-    if (empty($email) || empty($senha)) {
-        $mensagem = "Todos os campos são obrigatórios!";
-    } else {
-        // Buscar usuário pelo email
-        $sql = "SELECT * FROM usuarios WHERE email = ?";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([$email]);
-        $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if ($usuario && password_verify($senha, $usuario['senha'])) {
-            // Login bem-sucedido
-            $_SESSION['usuario_id'] = $usuario['id'];
-            $_SESSION['usuario_nome'] = $usuario['nome'];
-            $_SESSION['usuario_email'] = $usuario['email'];
-            
-            header('Location: index.php');
-            exit();
+    // Verificar se a conexão PDO foi estabelecida
+    if (!isset($con) || !($con instanceof PDO)) {
+        throw new Exception("Conexão com o banco de dados não estabelecida");
+    }
+} catch (Exception $e) {
+    die("Erro ao conectar com o banco de dados: " . $e->getMessage());
+}
+
+$login_error = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = isset($_POST['action']) ? $_POST['action'] : '';
+
+    if ($action === 'login') {
+        $email = isset($_POST['email']) ? trim($_POST['email']) : '';
+        $senha = isset($_POST['senha']) ? $_POST['senha'] : '';
+
+        if (strlen($email) == 0) {
+            $login_error = "Preencha seu e-mail";
+        } else if (strlen($senha) == 0) {
+            $login_error = "Preencha sua senha";
         } else {
-            $mensagem = "Email ou senha incorretos!";
+            try {
+                // Buscar usuário usando PDO
+                $sql = "SELECT id, nome, email, senha FROM usuarios WHERE email = ? LIMIT 1";
+                $stmt = $con->prepare($sql);
+                $stmt->execute([$email]);
+                
+                if ($stmt->rowCount() === 1) {
+                    $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
+                    $hash = $usuario['senha'];
+
+                    $password_ok = false;
+                    if (password_get_info($hash)['algo'] !== 0) {
+                        if (password_verify($senha, $hash)) $password_ok = true;
+                    } else {
+                        if ($senha === $hash) $password_ok = true;
+                    }
+
+                    if ($password_ok) {
+                        $_SESSION['id'] = $usuario['id'];
+                        $_SESSION['nome'] = $usuario['nome'];
+                        $_SESSION['email'] = $usuario['email'];
+                        header("Location: index.php"); // Redireciona para a página inicial após o login
+                        exit();
+                    } else {
+                        $login_error = "Falha ao logar! E-mail ou senha incorretos";
+                    }
+                } else {
+                    $login_error = "Falha ao logar! E-mail ou senha incorretos";
+                }
+            } catch (PDOException $e) {
+                $login_error = "Erro no servidor. Tente novamente mais tarde.";
+                // Para debug, você pode mostrar o erro completo:
+                // $login_error = "Erro: " . $e->getMessage();
+            }
         }
     }
 }
@@ -52,9 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             background-color: #f9f5f0;
             color: #333;
             line-height: 1.6;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            overflow-x: hidden;
         }
         
         .container {
@@ -67,6 +99,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         header {
             background-color: #fff;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
         
         .header-top {
@@ -86,10 +121,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         nav ul {
             display: flex;
             list-style: none;
+            align-items: center;
         }
         
         nav ul li {
-            margin-left: 25px;
+            margin-left: 20px;
+            position: relative;
         }
         
         nav ul li a {
@@ -98,45 +135,104 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             font-weight: 500;
             transition: color 0.3s;
             font-size: 14px;
+            padding: 8px 12px;
+            border-radius: 5px;
         }
         
         nav ul li a:hover {
             color: #8b7355;
         }
         
-        /* Formulário de Login */
-        .auth-container {
-            flex: 1;
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-left: 20px;
+            padding-left: 20px;
+            border-left: 1px solid #eee;
+        }
+        
+        .user-menu a {
+            font-size: 13px;
+            padding: 6px 12px;
+        }
+        
+        /* Layout de Login */
+        .login-page {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+        
+        .login-left {
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('fotos/bg.png') no-repeat center center/cover;
+            background-size: cover;
+            background-position: center;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 60px 0;
+            color: white;
+            text-align: center;
+            position: relative;
         }
         
-        .auth-card {
+        .login-hero-content {
+            max-width: 500px;
+            padding: 40px;
+        }
+        
+        .login-hero-content h1 {
+            font-size: 42px;
+            margin-bottom: 20px;
+            letter-spacing: 3px;
+        }
+        
+        .login-hero-content p {
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+        
+        .login-right {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            background-color: white;
+        }
+        
+        .login-card {
             background-color: white;
             border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            padding: 75px;
+            padding: 50px 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             width: 100%;
             max-width: 450px;
         }
         
-        .auth-title {
+        .login-title {
             text-align: center;
-            font-size: 32px;
-            margin-bottom: 10px;
-            color: #000;
-            letter-spacing: 2px;
-        }
-        
-        .auth-subtitle {
-            text-align: center;
-            color: #666;
             margin-bottom: 40px;
-            font-size: 16px;
+            font-size: 32px;
+            color: #000;
+            font-weight: 600;
         }
         
+        /* Alertas */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        .alert.error {
+            background: #ffeaea;
+            color: #8a1b1b;
+            border-left: 4px solid #e74c3c;
+        }
+        
+        /* Formulário */
         .form-group {
             margin-bottom: 25px;
         }
@@ -151,80 +247,92 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         .form-input {
             width: 100%;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            padding: 15px 20px;
+            border: 2px solid #eee;
+            border-radius: 10px;
             font-size: 16px;
-            transition: border-color 0.3s;
+            transition: all 0.3s;
+            background-color: #f9f9f9;
         }
         
         .form-input:focus {
             outline: none;
             border-color: #8b7355;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(139, 115, 85, 0.1);
         }
         
+        .form-input::placeholder {
+            color: #999;
+        }
+        
+        /* Botões */
         .btn {
             display: inline-block;
             background-color: #000;
             color: white;
             padding: 15px 30px;
-            border-radius: 30px;
+            border-radius: 10px;
             text-decoration: none;
             font-weight: bold;
-            transition: background-color 0.3s;
+            transition: all 0.3s;
             border: none;
             cursor: pointer;
+            text-align: center;
             width: 100%;
             font-size: 16px;
         }
         
         .btn:hover {
             background-color: #333;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
         
-        .auth-links {
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid #000;
+            color: #000;
+            margin-top: 15px;
+        }
+        
+        .btn-outline:hover {
+            background-color: #000;
+            color: white;
+        }
+        
+        .login-links {
             text-align: center;
             margin-top: 30px;
         }
         
-        .auth-link {
+        .login-links a {
             color: #8b7355;
             text-decoration: none;
-            margin: 0 10px;
-            font-size: 14px;
+            font-weight: 500;
             transition: color 0.3s;
+            display: block;
+            margin-bottom: 10px;
         }
         
-        .auth-link:hover {
+        .login-links a:hover {
             color: #000;
             text-decoration: underline;
-        }
-        
-        .alert {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-        
-        .alert-error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
         }
         
         /* Footer */
         footer {
             background-color: #000;
             color: white;
-            padding: 60px 0 30px;
+            padding: 40px 0 20px;
+            margin-top: 0;
         }
         
         .footer-content {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 40px;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
         }
         
         .footer-column h3 {
@@ -274,7 +382,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         .copyright {
             text-align: center;
-            padding-top: 30px;
+            padding-top: 20px;
             border-top: 1px solid #444;
             color: #999;
             font-size: 14px;
@@ -282,6 +390,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         /* Responsividade */
         @media (max-width: 768px) {
+            .login-page {
+                grid-template-columns: 1fr;
+            }
+            
+            .login-left {
+                min-height: 300px;
+            }
+            
+            .login-hero-content h1 {
+                font-size: 32px;
+            }
+            
+            .login-hero-content p {
+                font-size: 16px;
+            }
+            
+            .login-card {
+                padding: 30px 25px;
+                margin: -50px 20px 20px;
+                box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+            }
+            
             .header-top {
                 flex-direction: column;
                 text-align: center;
@@ -294,12 +424,41 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
             
             nav ul li {
-                margin: 5px 10px;
+                margin: 5px 8px;
             }
             
-            .auth-card {
-                padding: 30px 20px;
-                margin: 20px;
+            .user-menu {
+                margin-left: 0;
+                padding-left: 0;
+                border-left: none;
+                justify-content: center;
+                width: 100%;
+                margin-top: 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .login-hero-content h1 {
+                font-size: 28px;
+            }
+            
+            .login-title {
+                font-size: 28px;
+            }
+            
+            .login-card {
+                padding: 25px 20px;
+                margin: -30px 15px 15px;
+            }
+            
+            nav ul {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .user-menu {
+                flex-direction: column;
+                gap: 10px;
             }
         }
     </style>
@@ -307,95 +466,67 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <body>
     <header>
         <div class="container">
-            <div class="header-top">
-                <div class="logo"><?php echo $empresa; ?></div>
-                <nav>
-                    <ul>
-                        <li><a href="index.php">INÍCIO</a></li>
-                        <li><a href="produtos.php">PRODUTOS</a></li>
-                        <li><a href="sobre.php">SOBRE</a></li>
-                        <li><a href="cadastro.php">CADASTRAR</a></li>
-                    </ul>
-                </nav>
-            </div>
+        
         </div>
     </header>
-    
-    <div class="auth-container">
-        <div class="container">
-            <div class="auth-card">
-                <h1 class="auth-title">LOGIN</h1>
-                <p class="auth-subtitle">Entre na sua conta Lavelle</p>
-                
-                <?php if ($mensagem): ?>
-                    <div class="alert alert-error">
-                        <?php echo $mensagem; ?>
-                    </div>
+
+    <div class="login-page">
+        <div class="login-left">
+            <div class="login-hero-content">
+                <h1>Bem-vindo de volta</h1>
+                <p>Entre na sua conta e descubra um mundo de fragrâncias exclusivas</p>
+            </div>
+        </div>
+        
+        <div class="login-right">
+            <div class="login-card">
+                <h2 class="login-title">Login</h2>
+
+                <?php if ($login_error): ?>
+                    <div class="alert error"><?= htmlspecialchars($login_error) ?></div>
                 <?php endif; ?>
-                
+
                 <form method="POST" action="">
+                    <input type="hidden" name="action" value="login">
+                    
                     <div class="form-group">
-                        <label class="form-label" for="email">E-mail</label>
-                        <input type="email" class="form-input" id="email" name="email" 
-                               value="<?php echo isset($email) ? htmlspecialchars($email) : ''; ?>" required>
+                        <input class="form-input" id="email" name="email" type="email" placeholder="E-mail" required>
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label" for="senha">Senha</label>
-                        <input type="password" class="form-input" id="senha" name="senha" required>
+                        <input class="form-input" id="senha" name="senha" type="password" placeholder="Senha" required>
                     </div>
-                    
-                    <button type="submit" class="btn">ENTRAR</button>
+
+                    <button type="submit" class="btn">Entrar</button>
                 </form>
-                
-                <div class="auth-links">
-                    <a href="cadastro.php" class="auth-link">Não tem conta? Cadastre-se</a>
-                    
+
+                <div class="login-links">
+                    <a href="cadastro.php">Não tem conta? Cadastre-se</a>
+                    <a href="index.php">Voltar para página inicial</a>
                 </div>
             </div>
         </div>
     </div>
     
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-column">
-                    <h3>CONTATO</h3>
-                    <div class="contact-info">
-                        <p>E-mail: contatolavelle@gmail.com</p>
-                        <p>Endereço: Rua das Fragrâncias, 123 - Jardim Perfumado</p>
-                    </div>
-                </div>
-                <div class="footer-column">
-                    <h3>REDES SOCIAIS</h3>
-                    <div class="social-links">
-                        <a href="#">Facebook</a><br>
-                        <a href="#">Instagram</a><br>
-                        <a href="#">Twitter</a>
-                    </div>
-                </div>
-                <div class="footer-column">
-                    <h3>POLÍTICAS</h3>
-                    <ul>
-                        <li><a href="#">Política de Privacidade</a></li>
-                        <li><a href="#">Termos de Uso</a></li>
-                        <li><a href="#">Trocas e Devoluções</a></li>
-                    </ul>
-                </div>
-                <div class="footer-column">
-                    <h3>INFORMAÇÕES</h3>
-                    <ul>
-                        <li><a href="sobre.php">Sobre Nós</a></li>
-                        <li><a href="#">Nossa História</a></li>
-                        <li><a href="#">Trabalhe Conosco</a></li>
-                        <li><a href="#">FAQ</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="copyright">
-                <p>&copy; <?php echo date('Y'); ?> LAVELLE Perfumes. Todos os direitos reservados.</p>
-            </div>
-        </div>
-    </footer>
+
+
+    <script>
+        // Efeito de foco nos inputs
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('.form-input');
+            
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.parentElement.classList.add('focused');
+                });
+                
+                input.addEventListener('blur', function() {
+                    if (this.value === '') {
+                        this.parentElement.classList.remove('focused');
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

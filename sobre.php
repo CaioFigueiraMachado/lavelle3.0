@@ -649,8 +649,8 @@ if (isset($_SESSION['usuario_id'])) {
                             </div>
                         <?php else: ?>
                             <div class="user-menu">
-                                <li><a href="login.php">ENTRAR</a></li>
-                                <li><a href="cadastro.php">CADASTRAR</a></li>
+                                
+                            
                             </div>
                         <?php endif; ?>
                     </ul>

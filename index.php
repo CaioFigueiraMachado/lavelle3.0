@@ -2,13 +2,13 @@
 session_start();
 include 'conexao.php';
 
-// Verificar se usuário está logado
+// Verificar se usuário está logado - CORRIGIDO
 $usuarioLogado = false;
 $usuarioNome = "";
 
-if (isset($_SESSION['usuario_id'])) {
+if (isset($_SESSION['id'])) { // Mudado de 'usuario_id' para 'id'
     $usuarioLogado = true;
-    $usuarioNome = $_SESSION['usuario_nome'];
+    $usuarioNome = $_SESSION['nome']; // Mudado de 'usuario_nome' para 'nome'
 }
 
 // Definindo dados para a página
@@ -738,18 +738,19 @@ $destaques = [
                         <li><a href="paginaprodutos.php">PRODUTOS</a></li>
                        
                         <li><a href="sobre.php">SOBRE</a></li>
-                        <li><a href="#">CONTATO</a></li>
+                        <li><a href="contato.php">CONTATO</a></li>
                         
-                        <!-- Menu do Usuário -->
+                        <!-- Menu do Usuário - CORRIGIDO -->
                         <?php if ($usuarioLogado): ?>
                             <div class="user-menu">
+                                <span style="color: #8b7355; font-weight: 500;">Olá, <?php echo htmlspecialchars($usuarioNome); ?></span>
                                 <li><a href="perfil.php" class="profile-link">MEU PERFIL</a></li>
                                 <li><a href="logout.php">SAIR</a></li>
                             </div>
                         <?php else: ?>
                             <div class="user-menu">
                                 <li><a href="login.php">ENTRAR</a></li>
-                                <li><a href="cadastro.php">CADASTRAR</a></li>
+                                <li><a href="cadastro.php">CADASTRE-SE</a></li>
                             </div>
                         <?php endif; ?>
                     </ul>
@@ -759,7 +760,7 @@ $destaques = [
     </header>
 
     <!-- Seção de Boas-vindas para usuários logados -->
-
+   
     
     <section class="hero">
         <div class="container">

@@ -2,18 +2,19 @@
 session_start();
 include 'conexao.php';
 
-if (!isset($_SESSION['usuario_id'])) {
+// CORREÇÃO: Verificar a sessão correta
+if (!isset($_SESSION['id'])) {
     header('Location: login.php');
     exit();
 }
 
-$usuario_id = $_SESSION['usuario_id'];
+$usuario_id = $_SESSION['id'];
 $mensagem = "";
 $tipoMensagem = "";
 
 // Buscar dados do usuário
 $sql = "SELECT * FROM usuarios WHERE id = ?";
-$stmt = $pdo->prepare($sql);
+$stmt = $con->prepare($sql);
 $stmt->execute([$usuario_id]);
 $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -21,15 +22,14 @@ $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 $coluna_existe = false;
 try {
     $test_sql = "SELECT foto_perfil FROM usuarios WHERE id = ?";
-    $test_stmt = $pdo->prepare($test_sql);
+    $test_stmt = $con->prepare($test_sql);
     $test_stmt->execute([$usuario_id]);
     $coluna_existe = true;
 } catch (PDOException $e) {
-    // Coluna não existe, vamos criá-la
     if (strpos($e->getMessage(), 'foto_perfil') !== false) {
         try {
             $alter_sql = "ALTER TABLE usuarios ADD COLUMN foto_perfil VARCHAR(255) DEFAULT NULL";
-            $pdo->exec($alter_sql);
+            $con->exec($alter_sql);
             $coluna_existe = true;
         } catch (PDOException $alter_e) {
             $mensagem = "Erro ao configurar banco de dados para fotos: " . $alter_e->getMessage();
@@ -55,14 +55,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $cep = trim($_POST['cep']);
         
         $sql = "UPDATE usuarios SET nome = ?, telefone = ?, endereco = ?, cidade = ?, estado = ?, cep = ? WHERE id = ?";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $con->prepare($sql);
         
         if ($stmt->execute([$nome, $telefone, $endereco, $cidade, $estado, $cep, $usuario_id])) {
-            $_SESSION['usuario_nome'] = $nome;
+            $_SESSION['nome'] = $nome;
             $mensagem = "Perfil atualizado com sucesso!";
             $tipoMensagem = "success";
             
-            // Atualizar dados locais
             $usuario['nome'] = $nome;
             $usuario['telefone'] = $telefone;
             $usuario['endereco'] = $endereco;
@@ -75,27 +74,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
     
-    // Upload de foto de perfil (só se a coluna existe)
+    // Upload de foto de perfil
     if ($coluna_existe && isset($_FILES['foto_perfil']) && $_FILES['foto_perfil']['error'] === UPLOAD_ERR_OK) {
         $foto = $_FILES['foto_perfil'];
         $extensao = strtolower(pathinfo($foto['name'], PATHINFO_EXTENSION));
         $extensoes_permitidas = ['jpg', 'jpeg', 'png', 'gif'];
         
         if (in_array($extensao, $extensoes_permitidas)) {
-            // Verificar tamanho do arquivo (máximo 2MB)
             if ($foto['size'] <= 2 * 1024 * 1024) {
                 $nome_arquivo = 'perfil_' . $usuario_id . '_' . time() . '.' . $extensao;
                 $caminho_arquivo = $upload_dir . $nome_arquivo;
                 
                 if (move_uploaded_file($foto['tmp_name'], $caminho_arquivo)) {
-                    // Remover foto anterior se existir
                     if (!empty($usuario['foto_perfil']) && file_exists($usuario['foto_perfil'])) {
                         unlink($usuario['foto_perfil']);
                     }
                     
-                    // Atualizar no banco de dados
                     $sql = "UPDATE usuarios SET foto_perfil = ? WHERE id = ?";
-                    $stmt = $pdo->prepare($sql);
+                    $stmt = $con->prepare($sql);
                     
                     if ($stmt->execute([$caminho_arquivo, $usuario_id])) {
                         $usuario['foto_perfil'] = $caminho_arquivo;
@@ -103,32 +99,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             $mensagem = "Foto de perfil atualizada com sucesso!";
                             $tipoMensagem = "success";
                         }
-                    } else {
-                        $mensagem = "Erro ao salvar foto no banco de dados.";
-                        $tipoMensagem = "error";
                     }
-                } else {
-                    $mensagem = "Erro ao fazer upload da foto.";
-                    $tipoMensagem = "error";
                 }
-            } else {
-                $mensagem = "A foto deve ter no máximo 2MB.";
-                $tipoMensagem = "error";
             }
-        } else {
-            $mensagem = "Formato de arquivo não permitido. Use JPG, PNG ou GIF.";
-            $tipoMensagem = "error";
         }
-    } elseif (!$coluna_existe && isset($_FILES['foto_perfil'])) {
-        $mensagem = "Funcionalidade de fotos temporariamente indisponível.";
-        $tipoMensagem = "error";
     }
 }
 
 // Buscar dados atualizados do usuário
 if ($coluna_existe) {
     $sql = "SELECT * FROM usuarios WHERE id = ?";
-    $stmt = $pdo->prepare($sql);
+    $stmt = $con->prepare($sql);
     $stmt->execute([$usuario_id]);
     $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 }
@@ -141,7 +122,7 @@ if ($coluna_existe) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu Perfil - LAVELLE Perfumes</title>
     <style>
-        /* Reset e estilos gerais */
+        /* Reset e estilos gerais - Igual ao index.php */
         * {
             margin: 0;
             padding: 0;
@@ -153,9 +134,7 @@ if ($coluna_existe) {
             background-color: #f9f5f0;
             color: #333;
             line-height: 1.6;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            overflow-x: hidden;
         }
         
         .container {
@@ -164,10 +143,13 @@ if ($coluna_existe) {
             padding: 0 20px;
         }
         
-        /* Header */
+        /* Header - Igual ao index.php */
         header {
             background-color: #fff;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
         
         .header-top {
@@ -192,6 +174,7 @@ if ($coluna_existe) {
         
         nav ul li {
             margin-left: 20px;
+            position: relative;
         }
         
         nav ul li a {
@@ -217,6 +200,11 @@ if ($coluna_existe) {
             border-left: 1px solid #eee;
         }
         
+        .user-menu a {
+            font-size: 13px;
+            padding: 6px 12px;
+        }
+        
         .user-menu a.profile-link {
             background-color: #f5f5f5;
             color: #8b7355;
@@ -226,66 +214,68 @@ if ($coluna_existe) {
             background-color: #8b7355;
             color: white;
         }
-        
-        /* Container do Perfil */
+
+        /* Seção de Perfil - Estilo similar ao index.php */
+        .profile-section {
+            padding: 80px 0;
+        }
+
         .profile-container {
-            flex: 1;
-            padding: 60px 0;
-        }
-        
-        .profile-header {
-            text-align: center;
-            margin-bottom: 50px;
-        }
-        
-        .profile-header h1 {
-            font-size: 36px;
-            color: #000;
-            margin-bottom: 10px;
-        }
-        
-        .profile-header p {
-            color: #666;
-            font-size: 18px;
-        }
-        
-        .profile-content {
-            display: grid;
-            grid-template-columns: 300px 1fr;
-            gap: 50px;
             max-width: 1000px;
             margin: 0 auto;
         }
-        
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .profile-header h1 {
+            font-size: 42px;
+            color: #000;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+        }
+
+        .profile-header p {
+            font-size: 18px;
+            color: #666;
+        }
+
+        /* Layout do Perfil */
+        .profile-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 50px;
+            align-items: start;
+        }
+
         /* Sidebar do Perfil */
         .profile-sidebar {
             background: white;
             border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            height: fit-content;
-            position: sticky;
-            top: 100px;
-        }
-        
-        .profile-picture {
+            padding: 40px 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             text-align: center;
+        }
+
+        .profile-avatar-container {
             margin-bottom: 30px;
         }
-        
+
         .profile-avatar {
-            width: 150px;
-            height: 150px;
+            width: 180px;
+            height: 180px;
             border-radius: 50%;
             object-fit: cover;
             border: 4px solid #8b7355;
             margin: 0 auto 20px;
             display: block;
         }
-        
+
         .profile-avatar-placeholder {
-            width: 150px;
-            height: 150px;
+            width: 180px;
+            height: 180px;
             border-radius: 50%;
             background: linear-gradient(135deg, #8b7355, #000);
             margin: 0 auto 20px;
@@ -293,119 +283,132 @@ if ($coluna_existe) {
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 48px;
+            font-size: 60px;
             font-weight: bold;
             border: 4px solid #8b7355;
         }
-        
+
         .upload-btn {
             display: inline-block;
-            background-color: #8b7355;
+            background-color: #000;
             color: white;
-            padding: 10px 20px;
-            border-radius: 20px;
+            padding: 12px 25px;
+            border-radius: 30px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.3s;
             font-size: 14px;
             border: none;
+            margin-bottom: 10px;
         }
-        
+
         .upload-btn:hover {
-            background-color: #756049;
+            background-color: #333;
+            transform: translateY(-2px);
         }
-        
-        .upload-btn:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
+
+        .file-input {
+            display: none;
         }
-        
+
+        .file-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+        }
+
         .profile-stats {
             margin-top: 30px;
         }
-        
+
         .stat-item {
             display: flex;
             justify-content: space-between;
             padding: 15px 0;
             border-bottom: 1px solid #eee;
         }
-        
+
         .stat-item:last-child {
             border-bottom: none;
         }
-        
+
         .stat-label {
             color: #666;
+            font-size: 14px;
         }
-        
+
         .stat-value {
             font-weight: bold;
             color: #000;
         }
-        
+
         /* Formulário do Perfil */
-        .profile-form {
+        .profile-form-container {
             background: white;
             border-radius: 15px;
-            padding: 40px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 50px 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
-        
+
         .form-section {
             margin-bottom: 40px;
         }
-        
+
         .form-section h3 {
-            font-size: 20px;
+            font-size: 24px;
             color: #000;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
             border-bottom: 2px solid #f0f0f0;
         }
-        
+
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
+            gap: 25px;
+            margin-bottom: 25px;
         }
-        
+
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
-        
+
         .form-label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             color: #000;
             font-weight: 500;
             font-size: 14px;
         }
-        
+
         .form-input {
             width: 100%;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            padding: 15px 20px;
+            border: 2px solid #eee;
+            border-radius: 10px;
             font-size: 16px;
-            transition: border-color 0.3s;
+            transition: all 0.3s;
+            background-color: #f9f9f9;
         }
-        
+
         .form-input:focus {
             outline: none;
             border-color: #8b7355;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(139, 115, 85, 0.1);
         }
-        
-        .file-input {
-            display: none;
-        }
-        
-        .file-info {
-            margin-top: 10px;
-            font-size: 12px;
+
+        .form-input:disabled {
+            background-color: #f5f5f5;
             color: #666;
         }
-        
+
+        .form-note {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Botões - Estilo igual ao index.php */
         .btn {
             display: inline-block;
             background-color: #000;
@@ -414,15 +417,17 @@ if ($coluna_existe) {
             border-radius: 30px;
             text-decoration: none;
             font-weight: bold;
-            transition: background-color 0.3s;
+            transition: all 0.3s;
             border: none;
             cursor: pointer;
+            text-align: center;
             font-size: 16px;
-            margin-right: 15px;
         }
         
         .btn:hover {
             background-color: #333;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
         
         .btn-outline {
@@ -435,38 +440,41 @@ if ($coluna_existe) {
             background-color: #000;
             color: white;
         }
-        
+
         .profile-actions {
             display: flex;
             gap: 15px;
-            margin-top: 30px;
+            margin-top: 40px;
             flex-wrap: wrap;
         }
-        
+
+        /* Alertas */
         .alert {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
             font-size: 14px;
+            text-align: center;
         }
-        
+
         .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background: #eaf8ef;
+            color: #1f7a34;
+            border-left: 4px solid #27ae60;
         }
-        
+
         .alert-error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background: #ffeaea;
+            color: #8a1b1b;
+            border-left: 4px solid #e74c3c;
         }
-        
-        /* Footer */
-       footer {
+
+        /* Footer - Igual ao index.php */
+        footer {
             background-color: #000;
             color: white;
             padding: 60px 0 30px;
+            margin-top: 0;
         }
         
         .footer-content {
@@ -528,7 +536,7 @@ if ($coluna_existe) {
             color: #999;
             font-size: 14px;
         }
-        
+
         /* Responsividade */
         @media (max-width: 768px) {
             .header-top {
@@ -554,40 +562,53 @@ if ($coluna_existe) {
                 width: 100%;
                 margin-top: 10px;
             }
-            
-            .profile-content {
+
+            .profile-layout {
                 grid-template-columns: 1fr;
                 gap: 30px;
             }
-            
+
             .profile-sidebar {
-                position: static;
+                padding: 30px 25px;
             }
-            
+
+            .profile-form-container {
+                padding: 30px 25px;
+            }
+
             .form-row {
                 grid-template-columns: 1fr;
             }
-            
+
             .profile-actions {
                 flex-direction: column;
             }
-            
+
             .profile-actions .btn {
-                margin-right: 0;
+                width: 100%;
                 margin-bottom: 10px;
-                text-align: center;
+            }
+
+            .profile-avatar,
+            .profile-avatar-placeholder {
+                width: 140px;
+                height: 140px;
             }
         }
-        
+
         @media (max-width: 480px) {
-            .profile-form {
-                padding: 20px;
+            .profile-header h1 {
+                font-size: 32px;
             }
-            
+
+            .profile-form-container {
+                padding: 25px 20px;
+            }
+
             .profile-sidebar {
-                padding: 20px;
+                padding: 25px 20px;
             }
-            
+
             .profile-avatar,
             .profile-avatar-placeholder {
                 width: 120px;
@@ -604,10 +625,12 @@ if ($coluna_existe) {
                 <nav>
                     <ul>
                         <li><a href="index.php">INÍCIO</a></li>
-                        <li><a href="produtos.php">PRODUTOS</a></li>
+                        <li><a href="paginaprodutos.php">PRODUTOS</a></li>
                         <li><a href="sobre.php">SOBRE</a></li>
-                            <li><a href="contato.php">CONTATO</a></li>
+                        <li><a href="contato.php">CONTATO</a></li>
+                        
                         <div class="user-menu">
+                            <span style="color: #8b7355; font-weight: 500;">Olá, <?php echo htmlspecialchars($usuario['nome']); ?></span>
                             <li><a href="perfil.php" class="profile-link">MEU PERFIL</a></li>
                             <li><a href="logout.php">SAIR</a></li>
                         </div>
@@ -616,136 +639,138 @@ if ($coluna_existe) {
             </div>
         </div>
     </header>
-    
-    <div class="profile-container">
+
+    <section class="profile-section">
         <div class="container">
-            <div class="profile-header">
-                <h1>Meu Perfil</h1>
-                <p>Gerencie suas informações pessoais e preferências</p>
-            </div>
-            
-            <?php if ($mensagem): ?>
-                <div class="alert alert-<?php echo $tipoMensagem === 'success' ? 'success' : 'error'; ?>">
-                    <?php echo $mensagem; ?>
+            <div class="profile-container">
+                <div class="profile-header">
+                    <h1>Meu Perfil</h1>
+                    <p>Gerencie suas informações pessoais e preferências</p>
                 </div>
-            <?php endif; ?>
-            
-            <div class="profile-content">
-                <!-- Sidebar do Perfil -->
-                <div class="profile-sidebar">
-                    <div class="profile-picture">
-                        <?php if (!empty($usuario['foto_perfil'])): ?>
-                            <img src="<?php echo htmlspecialchars($usuario['foto_perfil']); ?>" 
-                                 alt="Foto de perfil" class="profile-avatar" id="profile-avatar">
-                        <?php else: ?>
-                            <div class="profile-avatar-placeholder">
-                                <?php echo strtoupper(substr($usuario['nome'], 0, 1)); ?>
-                            </div>
-                        <?php endif; ?>
+                
+                <?php if ($mensagem): ?>
+                    <div class="alert alert-<?php echo $tipoMensagem === 'success' ? 'success' : 'error'; ?>">
+                        <?php echo $mensagem; ?>
+                    </div>
+                <?php endif; ?>
+                
+                <div class="profile-layout">
+                    <!-- Sidebar do Perfil -->
+                    <div class="profile-sidebar">
+                        <div class="profile-avatar-container">
+                            <?php if (!empty($usuario['foto_perfil'])): ?>
+                                <img src="<?php echo htmlspecialchars($usuario['foto_perfil']); ?>" 
+                                     alt="Foto de perfil" class="profile-avatar" id="profile-avatar">
+                            <?php else: ?>
+                                <div class="profile-avatar-placeholder">
+                                    <?php echo strtoupper(substr($usuario['nome'], 0, 1)); ?>
+                                </div>
+                            <?php endif; ?>
+                            
+                            <form method="POST" action="" enctype="multipart/form-data" id="photo-form">
+                                <input type="file" name="foto_perfil" id="foto_perfil" class="file-input" 
+                                       accept="image/jpeg, image/png, image/gif" <?php echo !$coluna_existe ? 'disabled' : ''; ?>>
+                                <label for="foto_perfil" class="upload-btn" <?php echo !$coluna_existe ? 'style="background-color: #ccc; cursor: not-allowed;"' : ''; ?>>
+                                    <?php echo $coluna_existe ? 'Alterar Foto' : 'Upload Indisponível'; ?>
+                                </label>
+                                <div class="file-info">
+                                    <?php if ($coluna_existe): ?>
+                                        Formatos: JPG, PNG, GIF (Máx. 2MB)
+                                    <?php else: ?>
+                                        Sistema de fotos em manutenção
+                                    <?php endif; ?>
+                                </div>
+                            </form>
+                        </div>
                         
-                        <form method="POST" action="" enctype="multipart/form-data" id="photo-form">
-                            <input type="file" name="foto_perfil" id="foto_perfil" class="file-input" 
-                                   accept="image/jpeg, image/png, image/gif" <?php echo !$coluna_existe ? 'disabled' : ''; ?>>
-                            <label for="foto_perfil" class="upload-btn" <?php echo !$coluna_existe ? 'style="background-color: #ccc; cursor: not-allowed;"' : ''; ?>>
-                                <?php echo $coluna_existe ? 'Alterar Foto' : 'Upload Indisponível'; ?>
-                            </label>
-                            <div class="file-info">
-                                <?php if ($coluna_existe): ?>
-                                    Formatos: JPG, PNG, GIF (Máx. 2MB)
-                                <?php else: ?>
-                                    Sistema de fotos em manutenção
-                                <?php endif; ?>
+                        <div class="profile-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Membro desde</span>
+                                <span class="stat-value">
+                                    <?php echo date('d/m/Y', strtotime($usuario['created_at'] ?? $usuario['data_cadastro'] ?? '2024-01-01')); ?>
+                                </span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Pedidos</span>
+                                <span class="stat-value">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Favoritos</span>
+                                <span class="stat-value">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Formulário do Perfil -->
+                    <div class="profile-form-container">
+                        <form method="POST" action="" enctype="multipart/form-data">
+                            <div class="form-section">
+                                <h3>Informações Pessoais</h3>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="nome">Nome Completo</label>
+                                        <input type="text" class="form-input" id="nome" name="nome" 
+                                               value="<?php echo htmlspecialchars($usuario['nome']); ?>" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label" for="email">E-mail</label>
+                                        <input type="email" class="form-input" id="email" 
+                                               value="<?php echo htmlspecialchars($usuario['email']); ?>" disabled>
+                                        <div class="form-note">O e-mail não pode ser alterado</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="telefone">Telefone</label>
+                                        <input type="tel" class="form-input" id="telefone" name="telefone" 
+                                               value="<?php echo htmlspecialchars($usuario['telefone'] ?? ''); ?>">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label" for="cep">CEP</label>
+                                        <input type="text" class="form-input" id="cep" name="cep" 
+                                               value="<?php echo htmlspecialchars($usuario['cep'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-section">
+                                <h3>Endereço</h3>
+                                
+                                <div class="form-group">
+                                    <label class="form-label" for="endereco">Endereço Completo</label>
+                                    <input type="text" class="form-input" id="endereco" name="endereco" 
+                                           value="<?php echo htmlspecialchars($usuario['endereco'] ?? ''); ?>">
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="cidade">Cidade</label>
+                                        <input type="text" class="form-input" id="cidade" name="cidade" 
+                                               value="<?php echo htmlspecialchars($usuario['cidade'] ?? ''); ?>">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label" for="estado">Estado</label>
+                                        <input type="text" class="form-input" id="estado" name="estado" 
+                                               value="<?php echo htmlspecialchars($usuario['estado'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="profile-actions">
+                                <button type="submit" class="btn">Salvar Alterações</button>
+                                <a href="index.php" class="btn btn-outline">Voltar para Início</a>
                             </div>
                         </form>
                     </div>
-                    
-                    <div class="profile-stats">
-                        <div class="stat-item">
-                            <span class="stat-label">Membro desde</span>
-                            <span class="stat-value">
-                                <?php echo date('d/m/Y', strtotime($usuario['data_cadastro'])); ?>
-                            </span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Pedidos</span>
-                            <span class="stat-value">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Favoritos</span>
-                            <span class="stat-value">0</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Formulário do Perfil -->
-                <div class="profile-form">
-                    <form method="POST" action="" enctype="multipart/form-data">
-                        <div class="form-section">
-                            <h3>Informações Pessoais</h3>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label" for="nome">Nome Completo</label>
-                                    <input type="text" class="form-input" id="nome" name="nome" 
-                                           value="<?php echo htmlspecialchars($usuario['nome']); ?>" required>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label" for="email">E-mail</label>
-                                    <input type="email" class="form-input" id="email" 
-                                           value="<?php echo htmlspecialchars($usuario['email']); ?>" disabled>
-                                    <small style="color: #666;">O e-mail não pode ser alterado</small>
-                                </div>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label" for="telefone">Telefone</label>
-                                    <input type="tel" class="form-input" id="telefone" name="telefone" 
-                                           value="<?php echo htmlspecialchars($usuario['telefone'] ?? ''); ?>">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label" for="cep">CEP</label>
-                                    <input type="text" class="form-input" id="cep" name="cep" 
-                                           value="<?php echo htmlspecialchars($usuario['cep'] ?? ''); ?>">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-section">
-                            <h3>Endereço</h3>
-                            
-                            <div class="form-group">
-                                <label class="form-label" for="endereco">Endereço Completo</label>
-                                <input type="text" class="form-input" id="endereco" name="endereco" 
-                                       value="<?php echo htmlspecialchars($usuario['endereco'] ?? ''); ?>">
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label" for="cidade">Cidade</label>
-                                    <input type="text" class="form-input" id="cidade" name="cidade" 
-                                           value="<?php echo htmlspecialchars($usuario['cidade'] ?? ''); ?>">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label" for="estado">Estado</label>
-                                    <input type="text" class="form-input" id="estado" name="estado" 
-                                           value="<?php echo htmlspecialchars($usuario['estado'] ?? ''); ?>">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="profile-actions">
-                            <button type="submit" class="btn">Salvar Alterações</button>
-                            <a href="index.php" class="btn btn-outline">Voltar para Início</a>
-                        </div>
-                    </form>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
     
     <footer>
         <div class="container">
@@ -791,14 +816,12 @@ if ($coluna_existe) {
 
     <script>
         // Upload automático da foto quando selecionada
-        document.getElementById('foto_perfil').addEventListener('change', function() {
+        document.getElementById('foto_perfil')?.addEventListener('change', function() {
             if (this.files && this.files[0]) {
-                // Mostrar preview da imagem
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     let avatar = document.getElementById('profile-avatar');
                     if (!avatar) {
-                        // Se não existe avatar, criar um
                         const placeholder = document.querySelector('.profile-avatar-placeholder');
                         if (placeholder) {
                             placeholder.style.display = 'none';
@@ -807,15 +830,12 @@ if ($coluna_existe) {
                             newAvatar.className = 'profile-avatar';
                             newAvatar.src = e.target.result;
                             placeholder.parentNode.insertBefore(newAvatar, placeholder.nextSibling);
-                            avatar = newAvatar;
                         }
                     } else {
                         avatar.src = e.target.result;
                     }
                 }
                 reader.readAsDataURL(this.files[0]);
-                
-                // Submeter o formulário automaticamente
                 document.getElementById('photo-form').submit();
             }
         });
