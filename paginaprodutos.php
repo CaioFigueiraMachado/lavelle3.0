@@ -57,29 +57,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['atualizar_carrinho']))
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
     $metodo_pagamento = $_POST['metodo_pagamento'];
     
+    // Salvar total na sessão para usar nas páginas de pagamento
+    $_SESSION['total_compra'] = $total_carrinho;
+    $_SESSION['itens_carrinho'] = $_SESSION['carrinho'];
+    
     // Redirecionar para página de pagamento específica
     switch($metodo_pagamento) {
         case 'credit':
             header('Location: pagamento_cartao.php?tipo=credito');
-            break;
-        case 'debit':
-            header('Location: pagamento_cartao.php?tipo=debito');
-            break;
+            exit();
         case 'pix':
             header('Location: pagamento_pix.php');
-            break;
+            exit();
         case 'boleto':
             header('Location: pagamento_boleto.php');
-            break;
+            exit();
         default:
             header('Location: ' . $_SERVER['PHP_SELF']);
+            exit();
     }
-    exit();
 }
-
-// Calcular total do carrinho
-$total_carrinho = 0;
-$itens_carrinho = 0;
 
 // Definindo dados para a página
 $empresa = "LAVELLE";
@@ -94,7 +91,7 @@ $categorias = [
     "Mais Vendidos"
 ];
 
-// Produtos
+// Produtos com imagens personalizadas
 $produtos = [
     [
         "id" => 1,
@@ -110,7 +107,8 @@ $produtos = [
             "Notas de Fundo: Baunilha, Âmbar, Musk"
         ],
         "badge" => "Novo",
-        "badge_class" => "new"
+        "badge_class" => "new",
+        "imagem" => "nwe.jpg"
     ],
     [
         "id" => 2,
@@ -126,11 +124,12 @@ $produtos = [
             "Notas de Fundo: Âmbar, Couro, Musk"
         ],
         "badge" => "",
-        "badge_class" => ""
+        "badge_class" => "",
+        "imagem" => "perfumelucas.png"
     ],
     [
         "id" => 3,
-        "nome" => "Fraudaleza Mensa",
+        "nome" => "Lavelle Rose Sublime",
         "categoria" => "Feminino",
         "preco" => 279.90,
         "preco_formatado" => "R$ 279,90",
@@ -142,12 +141,13 @@ $produtos = [
             "Notas de Fundo: Musk Branco, Almíscar"
         ],
         "badge" => "Mais Vendido",
-        "badge_class" => "bestseller"
+        "badge_class" => "bestseller",
+        "imagem" => "Lavelle Rose Sublime.jpg"
     ],
     [
         "id" => 4,
-        "nome" => "Fraudaleza Convenciuária",
-        "categoria" => "Compartilhável",
+        "nome" => "Pure Dream",
+        "categoria" => "Feminino",
         "preco" => 319.90,
         "preco_formatado" => "R$ 319,90",
         "descricao" => "Notas amadeiradas e florais para todos os momentos e ocasiões.",
@@ -158,7 +158,8 @@ $produtos = [
             "Notas de Fundo: Musk, Sândalo, Baunilha"
         ],
         "badge" => "",
-        "badge_class" => ""
+        "badge_class" => "",
+        "imagem" => "Pure Dream.jpg"
     ],
     [
         "id" => 5,
@@ -174,7 +175,8 @@ $produtos = [
             "Notas de Fundo: Musk, Âmbar, Baunilha"
         ],
         "badge" => "Lançamento",
-        "badge_class" => "new"
+        "badge_class" => "new",
+        "imagem" => "imagens/produtos/lavelle-noir.jpg"
     ],
     [
         "id" => 6,
@@ -190,7 +192,8 @@ $produtos = [
             "Notas de Fundo: Almíscar, Âmbar Branco"
         ],
         "badge" => "",
-        "badge_class" => ""
+        "badge_class" => "",
+        "imagem" => "imagens/produtos/brisa-primaveril.jpg"
     ],
     [
         "id" => 7,
@@ -206,7 +209,8 @@ $produtos = [
             "Notas de Fundo: Sândalo, Patchouli, Baunilha"
         ],
         "badge" => "",
-        "badge_class" => ""
+        "badge_class" => "",
+        "imagem" => "imagens/produtos/essence-du-soir.jpg"
     ],
     [
         "id" => 8,
@@ -222,9 +226,41 @@ $produtos = [
             "Notas de Fundo: Musk, Âmbar, Sândalo"
         ],
         "badge" => "",
-        "badge_class" => ""
+        "badge_class" => "",
+        "imagem" => "imagens/produtos/urban-gentleman.jpg"
     ]
 ];
+
+// Função para obter a imagem do produto (usa placeholder se a imagem não existir)
+function getProdutoImagem($produto) {
+    if (isset($produto['imagem']) && file_exists($produto['imagem'])) {
+        return $produto['imagem'];
+    }
+    // Fallback para placeholder
+    return "https://via.placeholder.com/250x300/f5f5f5/333?text=" . urlencode($produto['nome']);
+}
+
+// Calcular total do carrinho - DEVE VIR DEPOIS DA DEFINIÇÃO DOS PRODUTOS
+$total_carrinho = 0;
+$itens_carrinho = 0;
+
+if (!empty($_SESSION['carrinho'])) {
+    foreach ($_SESSION['carrinho'] as $produto_id => $quantidade) {
+        $produto_carrinho = null;
+        foreach ($produtos as $produto) {
+            if ($produto['id'] == $produto_id) {
+                $produto_carrinho = $produto;
+                break;
+            }
+        }
+        
+        if ($produto_carrinho) {
+            $subtotal = $produto_carrinho['preco'] * $quantidade;
+            $total_carrinho += $subtotal;
+            $itens_carrinho += $quantidade;
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -233,7 +269,102 @@ $produtos = [
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Produtos - LAVELLE Perfumes</title>
     <style>
-        /* Reset e estilos gerais */
+        /* Seu CSS existente permanece igual */
+        /* Produtos */
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 30px;
+    margin-bottom: 60px;
+}
+
+.product-card {
+    background-color: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+    position: relative;
+}
+
+.product-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+}
+
+.product-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #000;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    z-index: 2;
+    font-weight: bold;
+}
+
+.product-badge.new {
+    background-color: #8b7355;
+}
+
+.product-badge.bestseller {
+    background-color: #d4af37;
+    color: #000;
+}
+
+.product-img {
+    height: 300px;
+    background-color: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.product-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s;
+}
+
+.product-card:hover .product-img img {
+    transform: scale(1.1);
+}
+
+/* Modal de Detalhes */
+.product-detail-image {
+    text-align: center;
+}
+
+.product-detail-image img {
+    width: 100%;
+    height: 500px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+/* Modal do Carrinho */
+.cart-item-image {
+    width: 80px;
+    height: 80px;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    margin-right: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.cart-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
         * {
             margin: 0;
             padding: 0;
@@ -469,6 +600,7 @@ $produtos = [
         .product-img img {
             max-width: 80%;
             max-height: 80%;
+            object-fit: cover;
             transition: transform 0.5s;
         }
         
@@ -617,6 +749,7 @@ $produtos = [
             max-width: 100%;
             max-height: 500px;
             border-radius: 10px;
+            object-fit: cover;
         }
         
         .product-detail-info h2 {
@@ -773,6 +906,13 @@ $produtos = [
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
+        }
+
+        .cart-item-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
         }
 
         .cart-item-info {
@@ -1170,6 +1310,40 @@ $produtos = [
                 font-size: 12px;
             }
         }
+        /* Adicionando estilo para atualização em tempo real */
+        .cart-update-info {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+            font-size: 14px;
+            color: #27ae60;
+            display: none;
+        }
+        
+        .quantity-update {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .quantity-update-btn {
+            width: 25px;
+            height: 25px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        
+        .quantity-update-btn:hover {
+            background: #f5f5f5;
+        }
     </style>
 </head>
 <body>
@@ -1180,7 +1354,7 @@ $produtos = [
                 <nav>
                     <ul>
                         <li><a href="index.php">INÍCIO</a></li>
-                        <li><a href="produtos.php" style="color: #8b7355;">PRODUTOS</a></li>
+                        <li><a href="paginaprodutos.php" style="color: #8b7355;">PRODUTOS</a></li>
                         <li><a href="sobre.php">SOBRE</a></li>
                         <li><a href="contato.php">CONTATO</a></li>
                         
@@ -1257,7 +1431,7 @@ $produtos = [
                     <div class="product-badge <?php echo $produto['badge_class']; ?>"><?php echo $produto['badge']; ?></div>
                 <?php endif; ?>
                 <div class="product-img">
-                    <img src="https://via.placeholder.com/250x300/f5f5f5/333?text=<?php echo urlencode($produto['nome']); ?>" alt="<?php echo $produto['nome']; ?>">
+                    <img src="<?php echo getProdutoImagem($produto); ?>" alt="<?php echo $produto['nome']; ?>">
                 </div>
                 <div class="product-info">
                     <div class="product-category"><?php echo $produto['categoria']; ?></div>
@@ -1314,6 +1488,10 @@ $produtos = [
                         <p>Adicione alguns produtos para continuar</p>
                     </div>
                 <?php else: ?>
+                    <div class="cart-update-info" id="cartUpdateInfo">
+                        Carrinho atualizado! O total será recalculado.
+                    </div>
+                    
                     <form method="POST" id="cartForm">
                         <?php 
                         $total_carrinho = 0;
@@ -1333,17 +1511,25 @@ $produtos = [
                                 $total_carrinho += $subtotal;
                                 $itens_carrinho += $quantidade;
                         ?>
-                            <div class="cart-item">
+                            <div class="cart-item" data-product-id="<?php echo $produto_id; ?>" data-price="<?php echo $produto_carrinho['preco']; ?>">
                                 <div class="cart-item-image">
-                                    <img src="https://via.placeholder.com/80x80/f5f5f5/333?text=<?php echo urlencode($produto_carrinho['nome']); ?>" alt="<?php echo $produto_carrinho['nome']; ?>">
+                                    <img src="<?php echo getProdutoImagem($produto_carrinho); ?>" alt="<?php echo $produto_carrinho['nome']; ?>">
                                 </div>
                                 <div class="cart-item-info">
                                     <div class="cart-item-name"><?php echo $produto_carrinho['nome']; ?></div>
                                     <div class="cart-item-price"><?php echo $produto_carrinho['preco_formatado']; ?></div>
                                     <div class="cart-item-quantity">
                                         <label>Quantidade:</label>
-                                        <input type="number" name="quantidade[<?php echo $produto_id; ?>]" 
-                                               value="<?php echo $quantidade; ?>" min="1" class="quantity-input">
+                                        <div class="quantity-update">
+                                            <button type="button" class="quantity-update-btn" onclick="updateQuantity(<?php echo $produto_id; ?>, -1)">-</button>
+                                            <input type="number" name="quantidade[<?php echo $produto_id; ?>]" 
+                                                   value="<?php echo $quantidade; ?>" min="1" class="quantity-input" 
+                                                   onchange="updateCartTotal()" id="quantity_<?php echo $produto_id; ?>">
+                                            <button type="button" class="quantity-update-btn" onclick="updateQuantity(<?php echo $produto_id; ?>, 1)">+</button>
+                                        </div>
+                                        <span class="item-subtotal" id="subtotal_<?php echo $produto_id; ?>">
+                                            Subtotal: R$ <?php echo number_format($subtotal, 2, ',', '.'); ?>
+                                        </span>
                                     </div>
                                 </div>
                                 <a href="?remover=<?php echo $produto_id; ?>" class="cart-item-remove" onclick="return confirm('Tem certeza que deseja remover este item?')">
@@ -1362,7 +1548,7 @@ $produtos = [
                 <div class="cart-footer">
                     <div class="cart-total">
                         <span>Total:</span>
-                        <span>R$ <?php echo number_format($total_carrinho, 2, ',', '.'); ?></span>
+                        <span id="cartTotal">R$ <?php echo number_format($total_carrinho, 2, ',', '.'); ?></span>
                     </div>
                     <div class="cart-actions">
                         <button type="submit" form="cartForm" name="atualizar_carrinho" class="btn btn-outline">
@@ -1391,17 +1577,8 @@ $produtos = [
                         <input type="radio" name="metodo_pagamento" value="credit" id="credit" required>
                         <div class="payment-method-icon">💳</div>
                         <div class="payment-method-info">
-                            <div class="payment-method-name">Cartão de Crédito</div>
+                            <div class="payment-method-name">Cartão</div>
                             <div class="payment-method-desc">Parcelamento em até 12x</div>
-                        </div>
-                    </div>
-                    
-                    <div class="payment-method" onclick="selectPaymentMethod('debit')">
-                        <input type="radio" name="metodo_pagamento" value="debit" id="debit">
-                        <div class="payment-method-icon">🏦</div>
-                        <div class="payment-method-info">
-                            <div class="payment-method-name">Cartão de Débito</div>
-                            <div class="payment-method-desc">Desconto de 5%</div>
                         </div>
                     </div>
                     
@@ -1492,6 +1669,58 @@ $produtos = [
         // Dados dos produtos para o modal
         const productsData = <?php echo json_encode($produtos); ?>;
         
+        // Função para atualizar quantidade
+        function updateQuantity(productId, change) {
+            const input = document.getElementById('quantity_' + productId);
+            let newValue = parseInt(input.value) + change;
+            
+            if (newValue < 1) newValue = 1;
+            if (newValue > 99) newValue = 99;
+            
+            input.value = newValue;
+            updateCartTotal();
+            showUpdateMessage();
+        }
+        
+        // Função para atualizar o total do carrinho em tempo real
+        function updateCartTotal() {
+            let total = 0;
+            const cartItems = document.querySelectorAll('.cart-item');
+            
+            cartItems.forEach(item => {
+                const productId = item.getAttribute('data-product-id');
+                const price = parseFloat(item.getAttribute('data-price'));
+                const quantity = parseInt(document.getElementById('quantity_' + productId).value);
+                const subtotal = price * quantity;
+                
+                // Atualizar subtotal do item
+                document.getElementById('subtotal_' + productId).textContent = 
+                    'Subtotal: R$ ' + subtotal.toFixed(2).replace('.', ',');
+                
+                total += subtotal;
+            });
+            
+            // Atualizar total do carrinho
+            document.getElementById('cartTotal').textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
+            
+            // Atualizar botão de finalizar compra no modal de pagamento
+            const finalizeButton = document.querySelector('#paymentForm button[type="submit"]');
+            if (finalizeButton) {
+                finalizeButton.textContent = 'Confirmar Pedido - R$ ' + total.toFixed(2).replace('.', ',');
+            }
+        }
+        
+        // Função para mostrar mensagem de atualização
+        function showUpdateMessage() {
+            const updateInfo = document.getElementById('cartUpdateInfo');
+            if (updateInfo) {
+                updateInfo.style.display = 'block';
+                setTimeout(() => {
+                    updateInfo.style.display = 'none';
+                }, 2000);
+            }
+        }
+        
         // Filtro por categoria
         document.addEventListener('DOMContentLoaded', function() {
             const categoryButtons = document.querySelectorAll('.category-btn');
@@ -1522,6 +1751,11 @@ $produtos = [
             document.getElementById('sort-select').addEventListener('change', function() {
                 sortProducts(this.value);
             });
+            
+            // Atualizar total quando o modal do carrinho abrir
+            document.querySelector('.cart-icon').addEventListener('click', function() {
+                setTimeout(updateCartTotal, 100);
+            });
         });
         
         // Função para abrir modal de detalhes do produto
@@ -1532,7 +1766,7 @@ $produtos = [
             const modalContent = document.getElementById('product-detail-content');
             modalContent.innerHTML = `
                 <div class="product-detail-image">
-                    <img src="https://via.placeholder.com/400x500/f5f5f5/333?text=${encodeURIComponent(product.nome)}" alt="${product.nome}">
+                    <img src="${product.imagem || 'https://via.placeholder.com/400x500/f5f5f5/333?text=' + encodeURIComponent(product.nome)}" alt="${product.nome}">
                 </div>
                 <div class="product-detail-info">
                     <div class="product-detail-category">${product.categoria}</div>
@@ -1577,7 +1811,7 @@ $produtos = [
             document.body.style.overflow = 'auto';
         }
         
-        // Funções para quantidade
+        // Funções para quantidade no modal de detalhes
         function increaseQuantity() {
             const quantityInput = document.getElementById('quantity');
             const modalInput = document.getElementById('modalQuantity');
@@ -1602,6 +1836,8 @@ $produtos = [
         // Funções do Carrinho
         function openCartModal() {
             document.getElementById('cartModal').style.display = 'block';
+            // Atualizar total quando o modal abrir
+            setTimeout(updateCartTotal, 100);
         }
         
         function closeCartModal() {
