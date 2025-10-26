@@ -87,20 +87,19 @@ $categorias = [
     "Feminino",
     "Masculino",
     "Compartilhável",
-    "Lançamentos",
-    "Mais Vendidos"
+   
 ];
 
 // Produtos com imagens personalizadas
 $produtos = [
     [
         "id" => 1,
-        "nome" => "Essência Aureum",
+        "nome" => "Lavelle Aureum",
         "categoria" => "Feminino",
         "preco" => 299.90,
         "preco_formatado" => "R$ 299,90",
         "descricao" => "Fragrância floral intensa com notas de jasmim e baunilha. Perfeita para ocasiões especiais e noites inesquecíveis.",
-        "descricao_longa" => "A Essência Aureum é uma fragrância sofisticada que combina notas florais intensas com um toque sensual de baunilha. Desenvolvida para mulheres que buscam elegância e sofisticação, esta fragrância possui excelente fixação e projeção moderada, ideal para uso noturno e ocasiões especiais.",
+        "descricao_longa" => "A fragancia Lavelle Aureum é uma fragrância sofisticada que combina notas florais intensas com um toque sensual de baunilha. Desenvolvida para mulheres que buscam elegância e sofisticação, esta fragrância possui excelente fixação e projeção moderada, ideal para uso noturno e ocasiões especiais.",
         "notas" => [
             "Notas de Saída: Bergamota, Laranja",
             "Notas de Coração: Jasmim, Rosa, Íris",
@@ -108,16 +107,16 @@ $produtos = [
         ],
         "badge" => "Novo",
         "badge_class" => "new",
-        "imagem" => "nwe.jpg"
+        "imagem" => "lavelleaureum.jpg"
     ],
     [
         "id" => 2,
-        "nome" => "Fraudaleza Executura",
+        "nome" => "Lavelle Intense Noir",
         "categoria" => "Masculino",
         "preco" => 349.90,
         "preco_formatado" => "R$ 349,90",
         "descricao" => "Perfume amadeirado com notas de sândalo e âmbar para o homem moderno.",
-        "descricao_longa" => "Fraudaleza Executura é uma fragrância masculina que transmite confiança e sofisticação. Com notas amadeiradas e especiarias, é perfeita para o homem contemporâneo que valoriza qualidade e personalidade.",
+        "descricao_longa" => "Intense Noir é uma fragrância masculina que transmite confiança e sofisticação. Com notas amadeiradas e especiarias, é perfeita para o homem contemporâneo que valoriza qualidade e personalidade.",
         "notas" => [
             "Notas de Saída: Cardamomo, Pimenta Preta",
             "Notas de Coração: Cedro, Sândalo",
@@ -146,7 +145,7 @@ $produtos = [
     ],
     [
         "id" => 4,
-        "nome" => "Pure Dream",
+        "nome" => "Lavelle Pure Dream",
         "categoria" => "Feminino",
         "preco" => 319.90,
         "preco_formatado" => "R$ 319,90",
@@ -163,12 +162,12 @@ $produtos = [
     ],
     [
         "id" => 5,
-        "nome" => "Lavelle Noir",
-        "categoria" => "Masculino",
+        "nome" => "Lavelle Echo",
+        "categoria" => "Compartilhável",
         "preco" => 389.90,
         "preco_formatado" => "R$ 389,90",
         "descricao" => "Perfume sofisticado com notas de patchouli e musk para ocasiões especiais.",
-        "descricao_longa" => "Lavelle Noir é a essência da masculinidade sofisticada. Com notas intensas de patchouli e musk, esta fragrância é ideal para homens que buscam uma presença marcante e memorável.",
+        "descricao_longa" => "Lavelle Echo é a essência da masculinidade sofisticada. Com notas intensas de patchouli e musk, esta fragrância é ideal para homens que buscam uma presença marcante e memorável.",
         "notas" => [
             "Notas de Saída: Lavanda, Alecrim",
             "Notas de Coração: Patchouli, Vetiver",
@@ -176,16 +175,16 @@ $produtos = [
         ],
         "badge" => "Lançamento",
         "badge_class" => "new",
-        "imagem" => "imagens/produtos/lavelle-noir.jpg"
+        "imagem" => "echo.jpg"
     ],
     [
         "id" => 6,
-        "nome" => "Brisa Primaveril",
+        "nome" => "Lavelle Verano",
         "categoria" => "Feminino",
         "preco" => 269.90,
         "preco_formatado" => "R$ 269,90",
         "descricao" => "Fragrância leve e floral com notas de frutas brancas para momentos especiais.",
-        "descricao_longa" => "Brisa Primaveril captura a essência da primavera em uma fragrância. Leve, floral e com toques frutados, é perfeita para mulheres que apreciam delicadeza e frescor.",
+        "descricao_longa" => "Verano captura a essência da primavera em uma fragrância. Leve, floral e com toques frutados, é perfeita para mulheres que apreciam delicadeza e frescor.",
         "notas" => [
             "Notas de Saída: Pêra, Maçã Verde",
             "Notas de Coração: Peônia, Frésia",
@@ -193,42 +192,9 @@ $produtos = [
         ],
         "badge" => "",
         "badge_class" => "",
-        "imagem" => "imagens/produtos/brisa-primaveril.jpg"
+        "imagem" => "verano.jpg"
     ],
-    [
-        "id" => 7,
-        "nome" => "Essence du Soir",
-        "categoria" => "Compartilhável",
-        "preco" => 339.90,
-        "preco_formatado" => "R$ 339,90",
-        "descricao" => "Perfume elegante para ocasiões especiais, com notas sofisticadas e duradouras.",
-        "descricao_longa" => "Essence du Soir é a fragrância ideal para noites especiais. Elegante e sofisticada, combina notas amadeiradas com toques cítricos, criando uma experiência olfativa memorável.",
-        "notas" => [
-            "Notas de Saída: Laranja Amarga, Limão",
-            "Notas de Coração: Jasmim, Tuberosa",
-            "Notas de Fundo: Sândalo, Patchouli, Baunilha"
-        ],
-        "badge" => "",
-        "badge_class" => "",
-        "imagem" => "imagens/produtos/essence-du-soir.jpg"
-    ],
-    [
-        "id" => 8,
-        "nome" => "Urban Gentleman",
-        "categoria" => "Masculino",
-        "preco" => 319.90,
-        "preco_formatado" => "R$ 319,90",
-        "descricao" => "Fragrância moderna para o homem contemporâneo que valoriza estilo e personalidade.",
-        "descricao_longa" => "Urban Gentleman é uma fragrância moderna desenvolvida para o homem urbano e sofisticado. Combina notas frescas com toques amadeirados, refletindo personalidade e estilo.",
-        "notas" => [
-            "Notas de Saída: Gengibre, Bergamota",
-            "Notas de Coração: Cedro, Cardamomo",
-            "Notas de Fundo: Musk, Âmbar, Sândalo"
-        ],
-        "badge" => "",
-        "badge_class" => "",
-        "imagem" => "imagens/produtos/urban-gentleman.jpg"
-    ]
+    
 ];
 
 // Função para obter a imagem do produto (usa placeholder se a imagem não existir)
@@ -1382,7 +1348,7 @@ if (!empty($_SESSION['carrinho'])) {
                         <?php else: ?>
                             <div class="user-menu">
                                 <li><a href="login.php">ENTRAR</a></li>
-                                <li><a href="cadastro.php">CADASTRE-SE</a></li>
+                               
                                 <li>
                                     <button class="cart-icon" onclick="openCartModal()">
                                         CARRINHO

@@ -19,9 +19,9 @@ $descricao = "Descubra fragrâncias únicas e inesquecíveis";
 // Produtos em destaque
 $produtos = [
     [
-        "nome" => "Essência Aureum",
+        "nome" => "Lavelle Aureum",
         "preco" => "R$ 299,90",
-        "imagem" => "nwe.jpg"
+        "imagem" => "lavelleaureum.jpg"
     ],
     [
         "nome" => "Fraudaleza Executura",
@@ -44,11 +44,11 @@ $categorias = [
     ],
     [
         "nome" => "Fragrâncias Masculinas",
-        "imagem" => "nwe.jpg"
+        "imagem" => "masculino.jpg"
     ],
     [
         "nome" => "Fragrâncias Compartilháveis",
-        "imagem" => "banner aureum.jpg"
+        "imagem" => "lavellegolden.jpg"
     ]
 ];
 
@@ -222,7 +222,7 @@ $destaques = [
         
         /* Hero Section */
         .hero {
-            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('nwe.jpg') no-repeat center center/cover;
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('navbar.jpg') no-repeat center center/cover;
             background-size: cover;
             background-position: center;
             height: 80vh;
@@ -750,7 +750,7 @@ $destaques = [
                         <?php else: ?>
                             <div class="user-menu">
                                 <li><a href="login.php">ENTRAR</a></li>
-                                <li><a href="cadastro.php">CADASTRE-SE</a></li>
+                              
                             </div>
                         <?php endif; ?>
                     </ul>

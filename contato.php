@@ -105,21 +105,42 @@ if (isset($_SESSION['usuario_id'])) {
             color: white;
         }
         
-        /* Hero Section */
+        /* Hero Section com Vídeo */
         .page-hero {
-            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('lavellefrutas.png') no-repeat center center/cover;
-            background-size: 2000px;
-            background-position: center;
+            position: relative;
             height: 50vh;
             display: flex;
             align-items: center;
             color: white;
             text-align: center;
+            overflow: hidden;
+        }
+        
+        .hero-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -2;
+        }
+        
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6));
+            z-index: -1;
         }
         
         .hero-content {
             max-width: 800px;
             margin: 0 auto;
+            position: relative;
+            z-index: 1;
         }
         
         .page-hero h1 {
@@ -586,8 +607,15 @@ if (isset($_SESSION['usuario_id'])) {
         </div>
     </header>
 
-    <!-- Hero Section -->
+    <!-- Hero Section com Vídeo -->
     <section class="page-hero">
+        <video class="hero-video" autoplay muted loop playsinline>
+            <source src="contato.mp4" type="video/mp4">
+            <source src="hero-video.webm" type="video/webm">
+            <!-- Fallback para navegadores que não suportam vídeo -->
+            Seu navegador não suporta o elemento de vídeo.
+        </video>
+        <div class="video-overlay"></div>
         <div class="container">
             <div class="hero-content fade-in">
                 <h1>Entre em Contato</h1>

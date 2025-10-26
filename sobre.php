@@ -397,41 +397,89 @@ if (isset($_SESSION['usuario_id'])) {
             line-height: 1.6;
         }
         
-        /* Process Section */
+        /* Process Section - CARDS ESTILIZADOS */
         .process-steps {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 30px;
         }
         
         .process-step {
+            background-color: white;
+            border-radius: 15px;
+            padding: 40px 30px;
             text-align: center;
-            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+        }
+        
+        .process-step::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, #8b7355, #d4b896);
+        }
+        
+        .process-step:hover {
+            transform: translateY(-15px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
         }
         
         .step-number {
-            width: 60px;
-            height: 60px;
-            background: #8b7355;
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #8b7355, #d4b896);
             color: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 24px;
             font-weight: bold;
-            margin: 0 auto 20px;
+            margin: 0 auto 25px;
+            box-shadow: 0 5px 15px rgba(139, 115, 85, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .process-step:hover .step-number {
+            transform: scale(1.1);
+            box-shadow: 0 8px 20px rgba(139, 115, 85, 0.4);
         }
         
         .process-step h3 {
-            font-size: 20px;
-            margin-bottom: 15px;
+            font-size: 22px;
+            margin-bottom: 20px;
             color: #000;
+            font-weight: 600;
+            position: relative;
+            padding-bottom: 15px;
+        }
+        
+        .process-step h3::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 2px;
+            background: #8b7355;
         }
         
         .process-step p {
             color: #666;
-            line-height: 1.6;
+            line-height: 1.7;
+            font-size: 15px;
+            margin-top: auto;
         }
         
         /* Testimonials Section */
@@ -592,6 +640,10 @@ if (isset($_SESSION['usuario_id'])) {
             .timeline-item {
                 padding-left: 20px;
             }
+            
+            .process-step {
+                padding: 30px 20px;
+            }
         }
         
         @media (max-width: 480px) {
@@ -609,6 +661,16 @@ if (isset($_SESSION['usuario_id'])) {
             
             .value-card, .team-member, .testimonial {
                 padding: 20px;
+            }
+            
+            .process-step {
+                padding: 25px 15px;
+            }
+            
+            .step-number {
+                width: 60px;
+                height: 60px;
+                font-size: 20px;
             }
         }
         
@@ -686,7 +748,7 @@ if (isset($_SESSION['usuario_id'])) {
                     <p>Hoje, somos reconhecidos como uma das principais perfumarias do país, com milhares de clientes satisfeitos e uma reputação construída sobre confiança, qualidade e excelência.</p>
                 </div>
                 <div class="story-image fade-in">
-                    <img src="lc.png" alt="Nossa História">
+                    <img src="sobre.jpg" alt="Nossa História">
                 </div>
             </div>
         </div>
@@ -790,7 +852,7 @@ if (isset($_SESSION['usuario_id'])) {
         </div>
     </section>
 
-    <!-- Process Section -->
+    <!-- Process Section - CARDS ESTILIZADOS -->
     <section class="section">
         <div class="container">
             <h2 class="section-title">Nosso Processo de Criação</h2>
@@ -810,11 +872,7 @@ if (isset($_SESSION['usuario_id'])) {
                     <h3>Testes de Qualidade</h3>
                     <p>Realizamos rigorosos testes de qualidade, durabilidade e segurança, garantindo que cada fragrância atenda aos mais altos padrões.</p>
                 </div>
-                <div class="process-step fade-in">
-                    <div class="step-number">4</div>
-                    <h3>Produção</h3>
-                    <p>Produção em pequenos lotes para garantir frescor e qualidade, utilizando apenas ingredientes premium selecionados.</p>
-                </div>
+               
             </div>
         </div>
     </section>

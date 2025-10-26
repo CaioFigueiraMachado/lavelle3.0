@@ -165,7 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         .login-left {
-            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('fotos/bg.png') no-repeat center center/cover;
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('sobre.jpg') no-repeat center center/cover;
             background-size: cover;
             background-position: center;
             display: flex;
