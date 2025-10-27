@@ -339,7 +339,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
     
     // Verificar se o carrinho não está vazio
     if (empty($_SESSION['carrinho'])) {
-        header('Location: ' . $_SERVER['PHP_SELF'] . '?erro=carrinho_vazio');
+        // Adicionar mensagem de erro na sessão
+        $_SESSION['erro_carrinho'] = "Seu carrinho está vazio! Adicione produtos antes de finalizar a compra.";
+        header('Location: ' . $_SERVER['PHP_SELF']);
         exit();
     }
     
@@ -1619,7 +1621,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
                                         </span>
                                     </div>
                                 </div>
-                                <a href="?remover=<?php echo $produto_id; ?>" class="cart-item-remove" onclick="return confirm('Tem certeza que deseja remover este item?')">
+                                <a href="?remover=<?php echo $produto_id; ?>" class="cart-item-remove" onclick="return confirmRemoveItem(event)">
                                     Remover
                                 </a>
                             </div>
@@ -1646,7 +1648,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
                                 Finalizar Compra
                             </button>
                         <?php else: ?>
-                            <button class="btn" onclick="alert('Por favor, faça login para finalizar a compra!'); window.location.href='login.php';">
+                            <button class="btn" onclick="showLoginAlert()">
                                 Fazer Login para Comprar
                             </button>
                         <?php endif; ?>
@@ -1694,7 +1696,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
                     </div>
                 </div>
                 
-                <button type="submit" name="finalizar_compra" class="btn" style="width: 100%; margin-top: 20px;" onclick="return confirmPurchase()">
+                <button type="button" name="finalizar_compra" class="btn" style="width: 100%; margin-top: 20px;" onclick="handleFinalizarCompra()">
                     Confirmar Pedido - R$ <?php echo number_format($total_carrinho, 2, ',', '.'); ?>
                 </button>
             </form>
@@ -1714,6 +1716,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
                 }
             }, 3000);
         </script>
+    <?php endif; ?>
+
+    <!-- SweetAlert para carrinho vazio -->
+    <?php if (isset($_SESSION['erro_carrinho'])): ?>
+        <script>
+            Swal.fire({
+                title: 'Carrinho Vazio',
+                text: '<?php echo $_SESSION['erro_carrinho']; ?>',
+                icon: 'warning',
+                confirmButtonColor: '#8b7355'
+            });
+        </script>
+        <?php unset($_SESSION['erro_carrinho']); ?>
     <?php endif; ?>
     
     <footer>
@@ -1758,6 +1773,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
         </div>
     </footer>
 
+    <!-- SweetAlert Library -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
         // Dados dos produtos para o modal (todos os produtos)
         const productsData = <?php echo json_encode($produtos); ?>;
@@ -1797,7 +1815,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
             document.getElementById('cartTotal').textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
             
             // Atualizar botão de finalizar compra no modal de pagamento
-            const finalizeButton = document.querySelector('#paymentForm button[type="submit"]');
+            const finalizeButton = document.querySelector('#paymentForm button[type="button"]');
             if (finalizeButton) {
                 finalizeButton.textContent = 'Confirmar Pedido - R$ ' + total.toFixed(2).replace('.', ',');
             }
@@ -1824,13 +1842,63 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
                 // Atualizar total quando o modal abrir
                 setTimeout(updateCartTotal, 100);
             } else {
-                alert('Por favor, faça login para acessar o carrinho!');
-                window.location.href = 'login.php';
+                Swal.fire({
+                    title: 'Login Necessário',
+                    text: 'Por favor, faça login para acessar o carrinho!',
+                    icon: 'warning',
+                    confirmButtonText: 'Fazer Login',
+                    confirmButtonColor: '#8b7355'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = 'login.php';
+                    }
+                });
             }
         }
         
         function closeCartModal() {
             document.getElementById('cartModal').style.display = 'none';
+        }
+
+        // Função para mostrar alerta de login
+        function showLoginAlert() {
+            Swal.fire({
+                title: 'Login Necessário',
+                text: 'Por favor, faça login para finalizar a compra!',
+                icon: 'warning',
+                confirmButtonText: 'Fazer Login',
+                confirmButtonColor: '#8b7355',
+                showCancelButton: true,
+                cancelButtonText: 'Continuar Comprando',
+                cancelButtonColor: '#6c757d'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = 'login.php';
+                }
+            });
+        }
+
+        // Função para confirmar remoção de item
+        function confirmRemoveItem(event) {
+            event.preventDefault();
+            const href = event.currentTarget.href;
+            
+            Swal.fire({
+                title: 'Remover Item',
+                text: 'Tem certeza que deseja remover este item do carrinho?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sim, Remover',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = href;
+                }
+            });
+            
+            return false;
         }
         
         // Filtro por categoria
@@ -1964,19 +2032,46 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
             document.getElementById(method).checked = true;
         }
 
-        // Função para confirmar compra
-        function confirmPurchase() {
+        // Função para finalizar compra
+        async function handleFinalizarCompra() {
             const selectedPayment = document.querySelector('input[name="metodo_pagamento"]:checked');
             if (!selectedPayment) {
-                alert('Por favor, selecione uma forma de pagamento.');
-                return false;
+                Swal.fire({
+                    title: 'Forma de Pagamento',
+                    text: 'Por favor, selecione uma forma de pagamento.',
+                    icon: 'warning',
+                    confirmButtonColor: '#8b7355'
+                });
+                return;
             }
             
-            if (confirm('Confirmar compra? Esta ação não pode ser desfeita.')) {
-                alert('Compra confirmada com sucesso! Redirecionando para o pagamento...');
-                return true;
+            const result = await Swal.fire({
+                title: 'Confirmar Compra?',
+                text: 'Esta ação não pode ser desfeita.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sim, Confirmar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#27ae60',
+                cancelButtonColor: '#d33'
+            });
+            
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Processando...',
+                    text: 'Redirecionando para o pagamento...',
+                    icon: 'info',
+                    timer: 1500,
+                    timerProgressBar: true,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    },
+                    willClose: () => {
+                        // Submeter o formulário após o alerta
+                        document.getElementById('paymentForm').submit();
+                    }
+                });
             }
-            return false;
         }
         
         // Função para ordenar produtos
