@@ -732,7 +732,7 @@ if (isset($_SESSION['usuario_id'])) {
             <div class="hero-content fade-in">
                 <h1>Nossa História</h1>
                 <p>Conheça a jornada da Lavelle Perfumes e nossa paixão por criar experiências olfativas únicas e memoráveis</p>
-                <a href="produtos.php" class="btn">Explorar Produtos</a>
+                <a href="paginaprodutos.php" class="btn">Explorar Produtos</a>
             </div>
         </div>
     </section>
@@ -761,31 +761,27 @@ if (isset($_SESSION['usuario_id'])) {
             <div class="timeline">
                 <div class="timeline-item fade-in">
                     <div class="timeline-content">
-                        <div class="timeline-year">2020</div>
+                        <div class="timeline-year">2025</div>
                         <h3>Fundação</h3>
                         <p>Abertura do primeiro site, com foco em perfumes importados de alta qualidade.</p>
                     </div>
                 </div>
                 <div class="timeline-item fade-in">
                     <div class="timeline-content">
-                        <div class="timeline-year">2021</div>
+                        <div class="timeline-year">2025</div>
                         <h3>Expansão Digital</h3>
                         <p>Lançamento da loja online, permitindo atender clientes em todo o Brasil com entrega rápida e segura.</p>
                     </div>
                 </div>
                 <div class="timeline-item fade-in">
                     <div class="timeline-content">
-                        <div class="timeline-year">2022</div>
+                        <div class="timeline-year">2025</div>
                         <h3>Linha Própria</h3>
                         <p>Desenvolvimento da primeira linha de perfumes exclusivos Lavelle, criada por perfumistas renomados.</p>
                     </div>
                 </div>
-                <div class="timeline-item fade-in">
-                    <div class="timeline-content">
-                        <div class="timeline-year">2023</div>
-                        <h3>Certificação Premium</h3>
-                        <p>Conquista das principais certificações de qualidade e sustentabilidade do mercado de cosméticos.</p>
-                    </div>
+                
+                   
                 </div>
             </div>
         </div>
@@ -836,7 +832,7 @@ if (isset($_SESSION['usuario_id'])) {
                 </div>
                 <div class="team-member fade-in">
                     <div class="member-photo">
-                        <img src="sophia.png" alt="Sophia Ruiz">
+                        <img src="sophiaruiz.png" alt="Sophia Ruiz">
                     </div>
                     <h3>Sophia Ruiz</h3>
                     <div class="role">SCRUM MASTER</div>
@@ -845,7 +841,7 @@ if (isset($_SESSION['usuario_id'])) {
                     <div class="member-photo">
                         <img src="ana.png" alt="Ana Victoria">
                     </div>
-                    <h3>Ana Victoria</h3>
+                    <h3>Ana Victória</h3>
                     <div class="role">DESIGNER DE PRODUTOS</div>
                 </div>
             </div>

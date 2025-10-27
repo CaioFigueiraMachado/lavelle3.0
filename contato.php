@@ -421,6 +421,55 @@ if (isset($_SESSION['usuario_id'])) {
                 opacity: 1;
             }
         }
+           .newsletter {
+            background-color: #000;
+            color: white;
+            text-align: center;
+            padding: 80px 0;
+        }
+        
+        .newsletter h2 {
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+        
+        .newsletter p {
+            font-size: 18px;
+            margin-bottom: 30px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .newsletter-form {
+            display: flex;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .newsletter-input {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 30px 0 0 30px;
+            font-size: 16px;
+        }
+        
+        .newsletter-btn {
+            background-color: #8b7355;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 0 30px 30px 0;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        .newsletter-btn:hover {
+            background-color: #756049;
+        }
+        
         
         /* Footer */
         footer {
@@ -620,7 +669,7 @@ if (isset($_SESSION['usuario_id'])) {
             <div class="hero-content fade-in">
                 <h1>Entre em Contato</h1>
                 <p>Estamos aqui para ajudar você a encontrar a fragrância perfeita</p>
-                <a href="produtos.php" class="btn">Explorar Produtos</a>
+                <a href="paginaprodutos.php" class="btn">Explorar Produtos</a>
             </div>
         </div>
     </section>
@@ -773,6 +822,18 @@ if (isset($_SESSION['usuario_id'])) {
         </div>
     </section>
 
+    
+   <section class="newsletter">
+        <div class="container">
+            <h2>Junte-se ao Nosso Mundo de Fragrâncias</h2>
+            <p>Receba novidades, lançamentos exclusivos e ofertas especiais diretamente no seu e-mail.</p>
+            <form class="newsletter-form">
+                <input type="email" class="newsletter-input" placeholder="Seu melhor e-mail" required>
+                <button type="submit" class="newsletter-btn">Assinar</button>
+            </form>
+        </div>
+    </section>
+    
     <footer>
         <div class="container">
             <div class="footer-content">
@@ -816,6 +877,14 @@ if (isset($_SESSION['usuario_id'])) {
     </footer>
 
     <script>
+
+         // Newsletter form
+        document.querySelector('.newsletter-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = this.querySelector('.newsletter-input').value;
+            alert('Obrigado por se inscrever com o e-mail: ' + email);
+            this.reset();
+        });
         // Animação de scroll
         document.addEventListener('DOMContentLoaded', function() {
             const observer = new IntersectionObserver((entries) => {

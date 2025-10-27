@@ -335,10 +335,7 @@ $total_compra = $_SESSION['total_compra'];
             
             <p>Escaneie o QR Code ou copie o código para pagar</p>
             
-            <div class="amount-container">
-                <div class="amount-label">Valor total:</div>
-                <div class="amount">R$ <?php echo number_format($total_compra, 2, ',', '.'); ?></div>
-            </div>
+           
             
             <div class="qr-section">
                 <div class="qr-container">
@@ -380,7 +377,7 @@ $total_compra = $_SESSION['total_compra'];
             
             <div class="btn-container">
                 <button class="btn" onclick="simulatePayment()">
-                    <i class="fas fa-check"></i> Simular Pagamento
+                    <i class="fas fa-check"></i> Confirmar Pagamento
                 </button>
                 <button class="btn btn-outline" onclick="window.location.href='paginaprodutos.php'">
                     <i class="fas fa-arrow-left"></i> Voltar aos Produtos
@@ -390,7 +387,7 @@ $total_compra = $_SESSION['total_compra'];
     </div>
 
     <div class="footer">
-        LAVELLE &copy; 2023 - Todos os direitos reservados
+        LAVELLE &copy; 2025 - Todos os direitos reservados
     </div>
 
     <script>

@@ -10,13 +10,20 @@ if (!isset($_SESSION['carrinho'])) {
 $usuarioLogado = false;
 $usuarioNome = "";
 
-if (isset($_SESSION['id'])) { // CORREÇÃO: Usar 'id' em vez de 'usuario_id'
+if (isset($_SESSION['id'])) {
     $usuarioLogado = true;
-    $usuarioNome = $_SESSION['nome']; // CORREÇÃO: Usar 'nome' em vez de 'usuario_nome'
+    $usuarioNome = $_SESSION['nome'];
 }
 
 // Processar adição ao carrinho
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['adicionar_carrinho'])) {
+    // Verificar se usuário está logado
+    if (!$usuarioLogado) {
+        $_SESSION['redirect_to'] = $_SERVER['PHP_SELF'];
+        header('Location: login.php');
+        exit();
+    }
+    
     $produto_id = $_POST['produto_id'];
     $quantidade = $_POST['quantidade'] ?? 1;
     
@@ -32,6 +39,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['adicionar_carrinho']))
 
 // Processar remoção do carrinho
 if (isset($_GET['remover'])) {
+    // Verificar se usuário está logado
+    if (!$usuarioLogado) {
+        $_SESSION['redirect_to'] = $_SERVER['PHP_SELF'];
+        header('Location: login.php');
+        exit();
+    }
+    
     $produto_id = $_GET['remover'];
     if (isset($_SESSION['carrinho'][$produto_id])) {
         unset($_SESSION['carrinho'][$produto_id]);
@@ -42,6 +56,13 @@ if (isset($_GET['remover'])) {
 
 // Processar atualização de quantidade
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['atualizar_carrinho'])) {
+    // Verificar se usuário está logado
+    if (!$usuarioLogado) {
+        $_SESSION['redirect_to'] = $_SERVER['PHP_SELF'];
+        header('Location: login.php');
+        exit();
+    }
+    
     foreach ($_POST['quantidade'] as $produto_id => $quantidade) {
         if ($quantidade <= 0) {
             unset($_SESSION['carrinho'][$produto_id]);
@@ -53,31 +74,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['atualizar_carrinho']))
     exit();
 }
 
-// Processar finalização de compra
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
-    $metodo_pagamento = $_POST['metodo_pagamento'];
-    
-    // Salvar total na sessão para usar nas páginas de pagamento
-    $_SESSION['total_compra'] = $total_carrinho;
-    $_SESSION['itens_carrinho'] = $_SESSION['carrinho'];
-    
-    // Redirecionar para página de pagamento específica
-    switch($metodo_pagamento) {
-        case 'credit':
-            header('Location: pagamento_cartao.php?tipo=credito');
-            exit();
-        case 'pix':
-            header('Location: pagamento_pix.php');
-            exit();
-        case 'boleto':
-            header('Location: pagamento_boleto.php');
-            exit();
-        default:
-            header('Location: ' . $_SERVER['PHP_SELF']);
-            exit();
-    }
-}
-
 // Definindo dados para a página
 $empresa = "LAVELLE";
 
@@ -87,7 +83,6 @@ $categorias = [
     "Feminino",
     "Masculino",
     "Compartilhável",
-   
 ];
 
 // Produtos com imagens personalizadas
@@ -124,7 +119,7 @@ $produtos = [
         ],
         "badge" => "",
         "badge_class" => "",
-        "imagem" => "perfumelucas.png"
+        "imagem" => "intense.png"
     ],
     [
         "id" => 3,
@@ -177,10 +172,10 @@ $produtos = [
         "badge_class" => "new",
         "imagem" => "echo.jpg"
     ],
-    [
+     [
         "id" => 6,
         "nome" => "Lavelle Verano",
-        "categoria" => "Feminino",
+        "categoria" => "Compartilhável",
         "preco" => 269.90,
         "preco_formatado" => "R$ 269,90",
         "descricao" => "Fragrância leve e floral com notas de frutas brancas para momentos especiais.",
@@ -194,6 +189,91 @@ $produtos = [
         "badge_class" => "",
         "imagem" => "verano.jpg"
     ],
+    [
+        "id" => 7,
+        "nome" => "Lavelle Horizon",
+        "categoria" => "Compartilhável",
+        "preco" => 269.90,
+        "preco_formatado" => "R$ 269,90",
+        "descricao" => "A fragrância que captura a essência da liberdade e do frescor, é perfeita para espíritos exploradores.",
+        "descricao_longa" => "A fragrância Lavelle Horizon é uma fragrância que evoca a imensidão do oceano e a leveza da brisa marinha. Desenvolvida para homens e mulheres que buscam liberdade, frescor e um espírito explorador, esta fragrância possui uma fixação duradoura e uma projeção refrescante, ideal para uso diário e momentos de aventura.",
+        "notas" => [
+            "Notas de Saída: Pêra, Maçã Verde",
+            "Notas de Coração: Peônia, Frésia",
+            "Notas de Fundo: Almíscar, Âmbar Branco"
+        ],
+        "badge" => "",
+        "badge_class" => "",
+        "imagem" => "horizon.png"
+    ],
+    [
+        "id" => 8,
+        "nome" => "Lavelle Aurore Florale",
+        "categoria" => "Compartilhável",
+        "preco" => 269.90,
+        "preco_formatado" => "R$ 269,90",
+        "descricao" => "A essência da natureza em um frasco. Uma fragrância floral e sustentável para o seu dia a dia.",
+        "descricao_longa" => "A fragrância Lavelle Aurore Florale é uma fragrância leve e delicada, inspirada na beleza de um amanhecer florido. Desenvolvida para mulheres que buscam uma conexão com a natureza e valorizam a sustentabilidade, esta fragrância possui uma fixação suave e uma projeção que remete à pureza, ideal para uso diário e momentos de contemplação.",
+        "notas" => [
+            "Notas de Saída: Folhas Verdes, Bergamota, Pêssego",
+            "Notas de Coração: Rosa, Frésia, Lírio do Vale",
+            "Notas de Fundo: Sândalo, Almíscar Branco, Âmbar"
+        ],
+        "badge" => "",
+        "badge_class" => "",
+        "imagem" => "auroreflorale2.png"
+    ],
+    [
+        "id" => 9,
+        "nome" => "Lavelle Soleil Doré",
+        "categoria" => "Compartilhável",
+        "preco" => 269.90,
+        "preco_formatado" => "R$ 269,90",
+        "descricao" => "Fragrância leve e floral com notas de frutas brancas para momentos especiais.",
+        "descricao_longa" => "A fragrância Lavelle Soleil Doré é uma celebração do sol e da elegância radiante. Criada para mulheres que exalam confiança e brilham intensamente, esta fragrância possui uma fixação luxuosa e uma projeção envolvente, ideal para qualquer ocasião que peça um toque de glamour e sofisticação.",
+        "notas" => [
+            "Notas de Saída: Flor de Laranjeira, Bergamota, Pêssego",
+            "Notas de Coração: Jasmim, Tuberosa, Ylang-Ylang",
+            "Notas de Fundo: Âmbar, Baunilha, Almíscar Branco"
+        ],
+        "badge" => "",
+        "badge_class" => "",
+        "imagem" => "soleildore3.png"
+    ],
+      [
+        "id" => 8,
+        "nome" => "Lavelle Aurore Florale",
+        "categoria" => "Compartilhável",
+        "preco" => 269.90,
+        "preco_formatado" => "R$ 269,90",
+        "descricao" => "A essência da natureza em um frasco. Uma fragrância floral e sustentável para o seu dia a dia.",
+        "descricao_longa" => "A fragrância Lavelle Aurore Florale é uma fragrância leve e delicada, inspirada na beleza de um amanhecer florido. Desenvolvida para mulheres que buscam uma conexão com a natureza e valorizam a sustentabilidade, esta fragrância possui uma fixação suave e uma projeção que remete à pureza, ideal para uso diário e momentos de contemplação.",
+        "notas" => [
+            "Notas de Saída: Folhas Verdes, Bergamota, Pêssego",
+            "Notas de Coração: Rosa, Frésia, Lírio do Vale",
+            "Notas de Fundo: Sândalo, Almíscar Branco, Âmbar"
+        ],
+        "badge" => "",
+        "badge_class" => "",
+        "imagem" => "auroreflorale2.png"
+    ], [
+        "id" => 8,
+        "nome" => "Lavelle Aurore Florale",
+        "categoria" => "Compartilhável",
+        "preco" => 269.90,
+        "preco_formatado" => "R$ 269,90",
+        "descricao" => "A essência da natureza em um frasco. Uma fragrância floral e sustentável para o seu dia a dia.",
+        "descricao_longa" => "A fragrância Lavelle Aurore Florale é uma fragrância leve e delicada, inspirada na beleza de um amanhecer florido. Desenvolvida para mulheres que buscam uma conexão com a natureza e valorizam a sustentabilidade, esta fragrância possui uma fixação suave e uma projeção que remete à pureza, ideal para uso diário e momentos de contemplação.",
+        "notas" => [
+            "Notas de Saída: Folhas Verdes, Bergamota, Pêssego",
+            "Notas de Coração: Rosa, Frésia, Lírio do Vale",
+            "Notas de Fundo: Sândalo, Almíscar Branco, Âmbar"
+        ],
+        "badge" => "",
+        "badge_class" => "",
+        "imagem" => "auroreflorale2.png"
+    ],
+    
     
 ];
 
@@ -206,7 +286,25 @@ function getProdutoImagem($produto) {
     return "https://via.placeholder.com/250x300/f5f5f5/333?text=" . urlencode($produto['nome']);
 }
 
-// Calcular total do carrinho - DEVE VIR DEPOIS DA DEFINIÇÃO DOS PRODUTOS
+// *** PAGINAÇÃO - DEVE VIR ANTES DO CÁLCULO DO CARRINHO ***
+
+// Configuração da paginação
+$produtos_por_pagina = 9;
+$total_produtos = count($produtos);
+$total_paginas = ceil($total_produtos / $produtos_por_pagina);
+
+// Obter página atual
+$pagina_atual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
+if ($pagina_atual < 1) $pagina_atual = 1;
+if ($pagina_atual > $total_paginas) $pagina_atual = $total_paginas;
+
+// Calcular produtos para a página atual
+$inicio = ($pagina_atual - 1) * $produtos_por_pagina;
+$produtos_pagina = array_slice($produtos, $inicio, $produtos_por_pagina);
+
+// *** AGORA CALCULAR O TOTAL DO CARRINHO ***
+
+// Calcular total do carrinho
 $total_carrinho = 0;
 $itens_carrinho = 0;
 
@@ -227,7 +325,48 @@ if (!empty($_SESSION['carrinho'])) {
         }
     }
 }
+
+// *** PROCESSAR FINALIZAÇÃO DA COMPRA - DEVE VIR DEPOIS DO CÁLCULO DO CARRINHO ***
+
+// Processar finalização de compra
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
+    // Verificar se usuário está logado
+    if (!$usuarioLogado) {
+        $_SESSION['redirect_to'] = $_SERVER['PHP_SELF'];
+        header('Location: login.php');
+        exit();
+    }
+    
+    // Verificar se o carrinho não está vazio
+    if (empty($_SESSION['carrinho'])) {
+        header('Location: ' . $_SERVER['PHP_SELF'] . '?erro=carrinho_vazio');
+        exit();
+    }
+    
+    $metodo_pagamento = $_POST['metodo_pagamento'];
+    
+    // Salvar total na sessão para usar nas páginas de pagamento
+    $_SESSION['total_compra'] = $total_carrinho;
+    $_SESSION['itens_carrinho'] = $_SESSION['carrinho'];
+    
+    // Redirecionar para página de pagamento específica
+    switch($metodo_pagamento) {
+        case 'credit':
+            header('Location: pagamento_cartao.php?tipo=credito');
+            exit();
+        case 'pix':
+            header('Location: pagamento_pix.php');
+            exit();
+        case 'boleto':
+            header('Location: pagamento_boleto.php');
+            exit();
+        default:
+            header('Location: ' . $_SERVER['PHP_SELF']);
+            exit();
+    }
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -235,102 +374,6 @@ if (!empty($_SESSION['carrinho'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Produtos - LAVELLE Perfumes</title>
     <style>
-        /* Seu CSS existente permanece igual */
-        /* Produtos */
-.products-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 30px;
-    margin-bottom: 60px;
-}
-
-.product-card {
-    background-color: white;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    transition: transform 0.3s, box-shadow 0.3s;
-    position: relative;
-}
-
-.product-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.15);
-}
-
-.product-badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background-color: #000;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 3px;
-    font-size: 12px;
-    z-index: 2;
-    font-weight: bold;
-}
-
-.product-badge.new {
-    background-color: #8b7355;
-}
-
-.product-badge.bestseller {
-    background-color: #d4af37;
-    color: #000;
-}
-
-.product-img {
-    height: 300px;
-    background-color: #f5f5f5;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    overflow: hidden;
-}
-
-.product-img img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.5s;
-}
-.product-card:hover .product-img img {
-    transform: scale(1.1);
-}
-
-/* Modal de Detalhes */
-.product-detail-image {
-    text-align: center;
-}
-
-.product-detail-image img {
-    width: 100%;
-    height: 500px;
-    border-radius: 10px;
-    object-fit: contain;
-    background-color: #f5f5f5;
-}
-
-/* Modal do Carrinho */
-.cart-item-image {
-    width: 80px;
-    height: 80px;
-    background-color: #f5f5f5;
-    border-radius: 8px;
-    margin-right: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-
-.cart-item-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
         * {
             margin: 0;
             padding: 0;
@@ -1114,6 +1157,7 @@ if (!empty($_SESSION['carrinho'])) {
             justify-content: center;
             gap: 10px;
             margin-bottom: 60px;
+            flex-wrap: wrap;
         }
         
         .pagination a, .pagination span {
@@ -1123,12 +1167,37 @@ if (!empty($_SESSION['carrinho'])) {
             text-decoration: none;
             color: #333;
             transition: all 0.3s;
+            font-weight: 500;
         }
         
-        .pagination a:hover, .pagination .current {
+        .pagination a:hover {
+            background-color: #8b7355;
+            color: white;
+            border-color: #8b7355;
+        }
+        
+        .pagination .current {
             background-color: #000;
             color: white;
             border-color: #000;
+        }
+        
+        .pagination .disabled {
+            color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .pagination .disabled:hover {
+            background-color: transparent;
+            color: #ccc;
+            border-color: #ddd;
+        }
+        
+        .page-info {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #666;
+            font-size: 14px;
         }
         
         /* Footer */
@@ -1265,6 +1334,15 @@ if (!empty($_SESSION['carrinho'])) {
             .form-row {
                 grid-template-columns: 1fr;
             }
+            
+            .pagination {
+                gap: 5px;
+            }
+            
+            .pagination a, .pagination span {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
         }
         
         @media (max-width: 480px) {
@@ -1281,7 +1359,17 @@ if (!empty($_SESSION['carrinho'])) {
                 padding: 8px 15px;
                 font-size: 12px;
             }
+            
+            .pagination {
+                flex-wrap: wrap;
+            }
+            
+            .pagination a, .pagination span {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
         }
+        
         /* Adicionando estilo para atualização em tempo real */
         .cart-update-info {
             background: #e8f5e8;
@@ -1330,7 +1418,7 @@ if (!empty($_SESSION['carrinho'])) {
                         <li><a href="sobre.php">SOBRE</a></li>
                         <li><a href="contato.php">CONTATO</a></li>
                         
-                        <!-- Menu do Usuário - CORRIGIDO -->
+                        <!-- Menu do Usuário -->
                         <?php if ($usuarioLogado): ?>
                             <div class="user-menu">
                                 <span style="color: #8b7355; font-weight: 500;">Olá, <?php echo htmlspecialchars($usuarioNome); ?></span>
@@ -1343,12 +1431,10 @@ if (!empty($_SESSION['carrinho'])) {
                                         <?php endif; ?>
                                     </button>
                                 </li>
-                                <li><a href="logout.php">SAIR</a></li>
                             </div>
                         <?php else: ?>
                             <div class="user-menu">
                                 <li><a href="login.php">ENTRAR</a></li>
-                               
                                 <li>
                                     <button class="cart-icon" onclick="openCartModal()">
                                         CARRINHO
@@ -1382,11 +1468,17 @@ if (!empty($_SESSION['carrinho'])) {
                     <option value="popular">Ordenar por: Mais Vendidos</option>
                 </select>
                 <select class="filter-select" id="show-select">
+                    <option value="9">Mostrar: 9 produtos</option>
                     <option value="12">Mostrar: 12 produtos</option>
                     <option value="24">Mostrar: 24 produtos</option>
-                    <option value="36">Mostrar: 36 produtos</option>
                 </select>
             </div>
+        </div>
+        
+        <!-- Informação da página -->
+        <div class="page-info">
+            Página <?php echo $pagina_atual; ?> de <?php echo $total_paginas; ?> 
+            | Mostrando <?php echo count($produtos_pagina); ?> de <?php echo $total_produtos; ?> produtos
         </div>
         
         <div class="categories">
@@ -1398,7 +1490,7 @@ if (!empty($_SESSION['carrinho'])) {
         </div>
         
         <div class="products-grid" id="products-container">
-            <?php foreach($produtos as $produto): ?>
+            <?php foreach($produtos_pagina as $produto): ?>
             <div class="product-card" data-category="<?php echo $produto['categoria']; ?>" data-price="<?php echo $produto['preco']; ?>">
                 <?php if(!empty($produto['badge'])): ?>
                     <div class="product-badge <?php echo $produto['badge_class']; ?>"><?php echo $produto['badge']; ?></div>
@@ -1426,12 +1518,34 @@ if (!empty($_SESSION['carrinho'])) {
             <?php endforeach; ?>
         </div>
         
+        <!-- Paginação -->
         <div class="pagination">
-            <a href="#">&laquo;</a>
-            <a href="#" class="current">1</a>
-            <a href="#">2</a>
-            <a href="#">3</a>
-            <a href="#">&raquo;</a>
+            <?php if ($pagina_atual > 1): ?>
+                <a href="?pagina=1">&laquo; Primeira</a>
+                <a href="?pagina=<?php echo $pagina_atual - 1; ?>">&lsaquo; Anterior</a>
+            <?php else: ?>
+             
+            <?php endif; ?>
+
+            <?php
+            // Mostrar até 5 páginas ao redor da atual
+            $inicio_paginas = max(1, $pagina_atual - 2);
+            $fim_paginas = min($total_paginas, $pagina_atual + 2);
+            
+            for ($i = $inicio_paginas; $i <= $fim_paginas; $i++):
+                if ($i == $pagina_atual): ?>
+                    <span class="current"><?php echo $i; ?></span>
+                <?php else: ?>
+                    <a href="?pagina=<?php echo $i; ?>"><?php echo $i; ?></a>
+                <?php endif;
+            endfor; ?>
+
+            <?php if ($pagina_atual < $total_paginas): ?>
+              
+            <?php else: ?>
+                <span class="disabled">Próxima &rsaquo;</span>
+                <span class="disabled">Última &raquo;</span>
+            <?php endif; ?>
         </div>
     </div>
     
@@ -1467,8 +1581,8 @@ if (!empty($_SESSION['carrinho'])) {
                     
                     <form method="POST" id="cartForm">
                         <?php 
-                        $total_carrinho = 0;
-                        $itens_carrinho = 0;
+                        $total_carrinho_calc = 0;
+                        $itens_carrinho_calc = 0;
                         foreach ($_SESSION['carrinho'] as $produto_id => $quantidade): 
                             // Encontrar o produto no array
                             $produto_carrinho = null;
@@ -1481,8 +1595,8 @@ if (!empty($_SESSION['carrinho'])) {
                             
                             if ($produto_carrinho):
                                 $subtotal = $produto_carrinho['preco'] * $quantidade;
-                                $total_carrinho += $subtotal;
-                                $itens_carrinho += $quantidade;
+                                $total_carrinho_calc += $subtotal;
+                                $itens_carrinho_calc += $quantidade;
                         ?>
                             <div class="cart-item" data-product-id="<?php echo $produto_id; ?>" data-price="<?php echo $produto_carrinho['preco']; ?>">
                                 <div class="cart-item-image">
@@ -1521,15 +1635,21 @@ if (!empty($_SESSION['carrinho'])) {
                 <div class="cart-footer">
                     <div class="cart-total">
                         <span>Total:</span>
-                        <span id="cartTotal">R$ <?php echo number_format($total_carrinho, 2, ',', '.'); ?></span>
+                        <span id="cartTotal">R$ <?php echo number_format($total_carrinho_calc, 2, ',', '.'); ?></span>
                     </div>
                     <div class="cart-actions">
                         <button type="submit" form="cartForm" name="atualizar_carrinho" class="btn btn-outline">
                             Atualizar Carrinho
                         </button>
-                        <button class="btn" onclick="openPaymentModal()">
-                            Finalizar Compra
-                        </button>
+                        <?php if ($usuarioLogado): ?>
+                            <button class="btn" onclick="openPaymentModal()">
+                                Finalizar Compra
+                            </button>
+                        <?php else: ?>
+                            <button class="btn" onclick="alert('Por favor, faça login para finalizar a compra!'); window.location.href='login.php';">
+                                Fazer Login para Comprar
+                            </button>
+                        <?php endif; ?>
                     </div>
                 </div>
             <?php endif; ?>
@@ -1639,7 +1759,7 @@ if (!empty($_SESSION['carrinho'])) {
     </footer>
 
     <script>
-        // Dados dos produtos para o modal
+        // Dados dos produtos para o modal (todos os produtos)
         const productsData = <?php echo json_encode($produtos); ?>;
         
         // Função para atualizar quantidade
@@ -1692,6 +1812,25 @@ if (!empty($_SESSION['carrinho'])) {
                     updateInfo.style.display = 'none';
                 }, 2000);
             }
+        }
+        
+        // Funções do Carrinho
+        function openCartModal() {
+            // Verificar se o usuário está logado (usando a variável PHP convertida para JS)
+            const usuarioLogado = <?php echo $usuarioLogado ? 'true' : 'false'; ?>;
+            
+            if (usuarioLogado) {
+                document.getElementById('cartModal').style.display = 'block';
+                // Atualizar total quando o modal abrir
+                setTimeout(updateCartTotal, 100);
+            } else {
+                alert('Por favor, faça login para acessar o carrinho!');
+                window.location.href = 'login.php';
+            }
+        }
+        
+        function closeCartModal() {
+            document.getElementById('cartModal').style.display = 'none';
         }
         
         // Filtro por categoria
@@ -1804,17 +1943,6 @@ if (!empty($_SESSION['carrinho'])) {
                 quantityInput.value = parseInt(quantityInput.value) - 1;
                 if (modalInput) modalInput.value = quantityInput.value;
             }
-        }
-        
-        // Funções do Carrinho
-        function openCartModal() {
-            document.getElementById('cartModal').style.display = 'block';
-            // Atualizar total quando o modal abrir
-            setTimeout(updateCartTotal, 100);
-        }
-        
-        function closeCartModal() {
-            document.getElementById('cartModal').style.display = 'none';
         }
         
         // Funções de Pagamento

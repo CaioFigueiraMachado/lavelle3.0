@@ -24,9 +24,9 @@ $produtos = [
         "imagem" => "lavelleaureum.jpg"
     ],
     [
-        "nome" => "Fraudaleza Executura",
+        "nome" => "Lavelle Horizon",
         "preco" => "R$ 349,90",
-        "imagem" => "perfumelucas.png"
+        "imagem" => "horizon.png"
     ],
     [
         "nome" => "Lavelle Rose Sublime",
@@ -44,7 +44,7 @@ $categorias = [
     ],
     [
         "nome" => "Fragrâncias Masculinas",
-        "imagem" => "masculino.jpg"
+        "imagem" => "perfumemasc.jfif"
     ],
     [
         "nome" => "Fragrâncias Compartilháveis",
@@ -97,6 +97,28 @@ $destaques = [
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 20px;
+        }
+        
+        /* Header Banner */
+        .header-banner {
+            background-color: #000;
+            color: #ffffff;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 14px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #333;
+        }
+        
+        .header-banner h1 {
+            font-size: 14px;
+            font-weight: 300;
+            margin: 0;
+            padding: 0;
+            letter-spacing: 3px;
+            color: #f5f5f5;
         }
         
         /* Header */
@@ -252,13 +274,37 @@ $destaques = [
             display: inline-block;
             background-color: #000;
             color: white;
-            padding: 12px 30px;
-            border-radius: 30px;
+            padding: 10px 20px; /* REDUZIDO de 12px 30px */
+            border-radius: 25px; /* REDUZIDO de 30px */
             text-decoration: none;
             font-weight: bold;
             transition: background-color 0.3s;
             border: none;
             cursor: pointer;
+            font-size: 14px; /* ADICIONADO tamanho de fonte menor */
+            text-align: center; /* ADICIONADO para centralizar texto */
+            display: flex; /* ADICIONADO */
+            align-items: center; /* ADICIONADO */
+            justify-content: center; /* ADICIONADO */
+            min-width: 100px; /* ADICIONADO largura mínima */
+        }
+           .btn2 {
+            display: inline-block;
+            background-color: #000;
+            color: white;
+            padding: 10px 20px; /* REDUZIDO de 12px 30px */
+            border-radius: 25px; /* REDUZIDO de 30px */
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 14px; /* ADICIONADO tamanho de fonte menor */
+            text-align: center; /* ADICIONADO para centralizar texto */
+           
+            align-items: center; /* ADICIONADO */
+            justify-content: center; /* ADICIONADO */
+            min-width: 100px; /* ADICIONADO largura mínima */
         }
         
         .btn:hover {
@@ -391,6 +437,7 @@ $destaques = [
             flex-grow: 1;
             display: flex;
             flex-direction: column;
+            justify-content: space-between; /* ADICIONADO para melhor distribuição */
         }
         
         .product-name {
@@ -404,6 +451,14 @@ $destaques = [
             color: #000;
             font-size: 20px;
             margin-bottom: 15px;
+        }
+        
+        /* Container do botão Comprar - NOVO */
+        .product-actions {
+            display: flex;
+            justify-content: center; /* Centraliza o botão */
+            margin-top: auto; /* Empurra o botão para baixo */
+            padding-top: 10px;
         }
         
         /* Categorias - CSS CORRIGIDO */
@@ -444,11 +499,15 @@ $destaques = [
             padding: 30px;
             background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
             color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Centraliza o conteúdo */
+            text-align: center;
         }
         
         .category-name {
             font-size: 24px;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
         
         /* Destaques - Cards Elegantes */
@@ -622,6 +681,12 @@ $destaques = [
         
         /* Responsividade */
         @media (max-width: 768px) {
+            .header-banner h1 {
+                font-size: 12px;
+                letter-spacing: 1px;
+                padding: 0 10px;
+            }
+            
             .header-top {
                 flex-direction: column;
                 text-align: center;
@@ -696,9 +761,21 @@ $destaques = [
             .category-card {
                 height: 300px;
             }
+            
+            /* Ajustes para botões em mobile */
+            .btn {
+                padding: 8px 16px;
+                font-size: 13px;
+                min-width: 90px;
+            }
         }
         
         @media (max-width: 480px) {
+            .header-banner h1 {
+                font-size: 10px;
+                letter-spacing: 0.5px;
+            }
+            
             .aureum-banner h2 {
                 font-size: 28px;
             }
@@ -724,10 +801,21 @@ $destaques = [
             .category-card {
                 height: 250px;
             }
+            
+            .btn {
+                padding: 7px 14px;
+                font-size: 12px;
+                min-width: 80px;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Banner com a frase estilizada -->
+    <div class="header-banner">
+        <h1>O perfume certo transforma a presença em memória.</h1>
+    </div>
+    
     <header>
         <div class="container">
             <div class="header-top">
@@ -767,7 +855,7 @@ $destaques = [
             <div class="hero-content">
                 <h1><?php echo $slogan; ?></h1>
                 <p><?php echo $descricao; ?></p>
-                <a href="paginaprodutos.php" class="btn">Explorar Coleção</a>
+                <a href="paginaprodutos.php" class="btn2">Explorar Coleção</a>
             </div>
         </div>
     </section>
@@ -799,7 +887,9 @@ $destaques = [
                     <div class="product-info">
                         <h3 class="product-name"><?php echo $produto['nome']; ?></h3>
                         <p class="product-price"><?php echo $produto['preco']; ?></p>
-                        <a href="paginaprodutos.php" class="btn" style="padding: 8px 20px; font-size: 14px; margin-top: 10px;">Comprar</a>
+                        <div class="product-actions">
+                            <a href="paginaprodutos.php" class="btn">Comprar</a>
+                        </div>
                     </div>
                 </div>
                 <?php endforeach; ?>
@@ -819,7 +909,7 @@ $destaques = [
                     <img src="<?php echo $categoria['imagem']; ?>" alt="<?php echo $categoria['nome']; ?>" class="category-img">
                     <div class="category-overlay">
                         <h3 class="category-name"><?php echo $categoria['nome']; ?></h3>
-                        <a href="paginaprodutos.php" class="btn" style="padding: 8px 20px; font-size: 14px;">Explorar</a>
+                        <a href="paginaprodutos.php" class="btn">Explorar</a>
                     </div>
                 </div>
                 <?php endforeach; ?>
@@ -844,16 +934,6 @@ $destaques = [
         </div>
     </section>
     
-    <section class="newsletter">
-        <div class="container">
-            <h2>Junte-se ao Nosso Mundo de Fragrâncias</h2>
-            <p>Receba novidades, lançamentos exclusivos e ofertas especiais diretamente no seu e-mail.</p>
-            <form class="newsletter-form">
-                <input type="email" class="newsletter-input" placeholder="Seu melhor e-mail" required>
-                <button type="submit" class="newsletter-btn">Assinar</button>
-            </form>
-        </div>
-    </section>
     
     <footer>
         <div class="container">
