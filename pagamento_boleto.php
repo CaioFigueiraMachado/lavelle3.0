@@ -1,7 +1,17 @@
 <?php
 session_start();
 
-$total_compra = $_SESSION['total_compra'];
+// Verificar se a variável de sessão existe
+if (isset($_SESSION['total_compra'])) {
+    $total_compra = $_SESSION['total_compra'];
+} else {
+    // Se não existir, definir um valor padrão ou redirecionar
+    $total_compra = 0;
+    // Ou redirecionar de volta para o carrinho
+    // header('Location: carrinho.php');
+    // exit;
+}
+
 // Gerar data de vencimento (2 dias úteis a partir de hoje)
 $vencimento = date('d/m/Y', strtotime('+2 weekdays'));
 ?>

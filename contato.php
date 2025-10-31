@@ -627,9 +627,34 @@ if (isset($_SESSION['usuario_id'])) {
         .fade-in {
             animation: fadeInUp 0.8s ease-out;
         }
+        /* Header Banner */
+        .header-banner {
+            background-color: #000;
+            color: #ffffff;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 14px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #333;
+        }
+        
+        .header-banner h1 {
+            font-size: 14px;
+            font-weight: 300;
+            margin: 0;
+            padding: 0;
+            letter-spacing: 3px;
+            color: #f5f5f5;
+        }
+        
     </style>
 </head>
 <body>
+     <div class="header-banner">
+        <h1>O perfume certo transforma a presença em memória.</h1>
+    </div>
     <header>
         <div class="container">
             <div class="header-top">

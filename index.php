@@ -11,6 +11,9 @@ if (isset($_SESSION['id'])) { // Mudado de 'usuario_id' para 'id'
     $usuarioNome = $_SESSION['nome']; // Mudado de 'usuario_nome' para 'nome'
 }
 
+// Verificar se é admin
+$isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'];
+
 // Definindo dados para a página
 $empresa = "LAVELLE";
 $slogan = "O perfume certo transforma a presença em memória.";
@@ -66,7 +69,7 @@ $destaques = [
     ],
     [
         "titulo" => "Sustentabilidade",
-        "descricao" => "Comprometidos com práticas sustentáveis e responsáveis em toda nossa cadeia de produção.",
+        "descricao" => "Comprometidos com práticas sustentáveis e responsáveis em toda nossa cadeiade produção.",
         "icone" => "S"
     ],
    
@@ -193,6 +196,18 @@ $destaques = [
             color: white;
         }
         
+        /* Link ADM - NOVO ESTILO */
+        .user-menu a.admin-link {
+            background-color: #8b7355;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .user-menu a.admin-link:hover {
+            background-color: #000;
+            color: white;
+        }
+        
         /* Seção de Boas-vindas */
         .user-welcome {
             background: linear-gradient(135deg, #8b7355 0%, #000 100%);
@@ -244,7 +259,7 @@ $destaques = [
         
         /* Hero Section */
         .hero {
-            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('navbar.jpg') no-repeat center center/cover;
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('lavellehome.png') no-repeat center center/cover;
             background-size: cover;
             background-position: center;
             height: 80vh;
@@ -833,6 +848,12 @@ $destaques = [
                             <div class="user-menu">
                                 <span style="color: #8b7355; font-weight: 500;">Olá, <?php echo htmlspecialchars($usuarioNome); ?></span>
                                 <li><a href="perfil.php" class="profile-link">MEU PERFIL</a></li>
+                                
+                                <!-- LINK ADM - APENAS PARA ADMINISTRADOR -->
+                                <?php if ($isAdmin): ?>
+                                    <li><a href="admin/dashboard.php" class="admin-link">ADM</a></li>
+                                <?php endif; ?>
+                                
                                 <li><a href="logout.php">SAIR</a></li>
                             </div>
                         <?php else: ?>

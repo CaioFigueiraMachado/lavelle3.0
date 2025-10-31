@@ -1,7 +1,47 @@
 <?php
 session_start();
 
+// Verificar se o usuário está logado
+if (!isset($_SESSION['id'])) {
+    header('Location: login.php');
+    exit();
+}
+
+// Verificar se existe carrinho e total
+if (!isset($_SESSION['total_compra']) || !isset($_SESSION['itens_carrinho']) || empty($_SESSION['itens_carrinho'])) {
+    // Redirecionar de volta para o carrinho se não houver itens
+    header('Location: paginaprodutos.php');
+    exit();
+}
+
+// Obter o total da compra
 $total_compra = $_SESSION['total_compra'];
+
+// Verificar se o total é válido
+if ($total_compra <= 0) {
+    // Se o total for zero ou negativo, recalcular a partir dos itens do carrinho
+    $total_compra = 0;
+    if (isset($_SESSION['produtos_carrinho'])) {
+        foreach ($_SESSION['produtos_carrinho'] as $item) {
+            $total_compra += $item['subtotal'];
+        }
+    }
+    
+    // Se ainda for zero, redirecionar
+    if ($total_compra <= 0) {
+        header('Location: paginaprodutos.php');
+        exit();
+    }
+}
+
+// Aplicar desconto de 15% para PIX
+$total_com_desconto = $total_compra * 0.85;
+$desconto = $total_compra - $total_com_desconto;
+
+// Gerar um ID único para esta transação PIX
+if (!isset($_SESSION['pix_transaction_id'])) {
+    $_SESSION['pix_transaction_id'] = uniqid('pix_');
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -10,6 +50,8 @@ $total_compra = $_SESSION['total_compra'];
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pagamento PIX - LAVELLE</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Incluir SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         * {
             margin: 0;
@@ -103,6 +145,25 @@ $total_compra = $_SESSION['total_compra'];
             font-size: 32px;
             font-weight: 700;
             color: #32b572;
+        }
+        
+        .discount-info {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #27ae60;
+        }
+        
+        .discount-text {
+            color: #27ae60;
+            font-weight: 600;
+        }
+        
+        .original-price {
+            text-decoration: line-through;
+            color: #999;
+            font-size: 18px;
         }
         
         .qr-section {
@@ -335,18 +396,41 @@ $total_compra = $_SESSION['total_compra'];
             
             <p>Escaneie o QR Code ou copie o código para pagar</p>
             
-           
+            <div class="discount-info">
+                <div class="discount-text">
+                    <i class="fas fa-tag"></i> Desconto de 15% aplicado para PIX!
+                </div>
+                <div style="margin-top: 10px;">
+                    <span class="original-price">De: R$ <?php echo number_format($total_compra, 2, ',', '.'); ?></span>
+                    <span style="font-weight: bold; color: #27ae60;"> Por: R$ <?php echo number_format($total_com_desconto, 2, ',', '.'); ?></span>
+                </div>
+                <div style="font-size: 14px; color: #666; margin-top: 5px;">
+                    Economia de R$ <?php echo number_format($desconto, 2, ',', '.'); ?>
+                </div>
+            </div>
             
+            <div class="amount-container">
+                <div class="amount-label">Valor total a pagar:</div>
+                <div class="amount">R$ <?php echo number_format($total_com_desconto, 2, ',', '.'); ?></div>
+            </div>
+            
+            <?php if ($total_com_desconto <= 0): ?>
+            <div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center;">
+                <i class="fas fa-exclamation-triangle"></i> 
+                Valor inválido detectado. <a href="paginaprodutos.php" style="color: #721c24; text-decoration: underline;">Volte ao carrinho</a> para recalculá-lo.
+            </div>
+            <?php endif; ?>
+           
             <div class="qr-section">
                 <div class="qr-container">
                     <div class="qr-title">QR Code para pagamento</div>
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=00020126580014br.gov.bcb.pix0136c8b7a1e2-d3f4-5g6h-7i8j-9k0l1m2n3o4p520400005303986540<?php echo number_format($total_compra, 2, '', ''); ?>5802BR5913LAVELLE STORE6008SAO PAULO62070503***6304A1B2" alt="QR Code PIX" class="qr-code">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=00020126580014br.gov.bcb.pix0136c8b7a1e2-d3f4-5g6h-7i8j-9k0l1m2n3o4p520400005303986540<?php echo number_format($total_com_desconto, 2, '', ''); ?>5802BR5913LAVELLE STORE6008SAO PAULO62070503***6304A1B2" alt="QR Code PIX" class="qr-code">
                 </div>
                 
                 <div class="code-container">
                     <div class="code-title">Código PIX (copiar e colar)</div>
                     <div class="pix-code">
-                        00020126580014br.gov.bcb.pix0136c8b7a1e2-d3f4-5g6h-7i8j-9k0l1m2n3o4p520400005303986540<?php echo number_format($total_compra, 2, '', ''); ?>5802BR5913LAVELLE STORE6008SAO PAULO62070503***6304A1B2
+                        00020126580014br.gov.bcb.pix0136c8b7a1e2-d3f4-5g6h-7i8j-9k0l1m2n3o4p520400005303986540<?php echo number_format($total_com_desconto, 2, '', ''); ?>5802BR5913LAVELLE STORE6008SAO PAULO62070503***6304A1B2
                     </div>
                     <button class="copy-btn" onclick="copyPixCode()">
                         <i class="far fa-copy"></i> Copiar Código PIX
@@ -405,44 +489,117 @@ $total_compra = $_SESSION['total_compra'];
             } else {
                 document.getElementById('timer').innerHTML = '<i class="fas fa-exclamation-triangle"></i> Tempo esgotado! Por favor, inicie um novo pagamento.';
                 document.getElementById('timer').style.color = '#e74c3c';
+                
+                // Mostrar alerta SweetAlert2 quando o tempo esgotar
+                Swal.fire({
+                    title: 'Tempo Esgotado!',
+                    text: 'O tempo para pagamento expirou. Por favor, inicie um novo pedido.',
+                    icon: 'warning',
+                    confirmButtonColor: '#8b7355',
+                    confirmButtonText: 'Entendi'
+                });
             }
         }
         
         function copyPixCode() {
             const pixCode = document.querySelector('.pix-code').textContent;
             navigator.clipboard.writeText(pixCode).then(() => {
-                // Feedback visual
+                // Feedback visual no botão
                 const copyBtn = document.querySelector('.copy-btn');
                 const originalText = copyBtn.innerHTML;
                 copyBtn.innerHTML = '<i class="fas fa-check"></i> Código Copiado!';
                 copyBtn.style.background = '#32b572';
+                
+                // SweetAlert2 de sucesso
+                Swal.fire({
+                    title: 'Código Copiado!',
+                    text: 'O código PIX foi copiado para a área de transferência.',
+                    icon: 'success',
+                    timer: 2000,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                });
                 
                 setTimeout(() => {
                     copyBtn.innerHTML = originalText;
                     copyBtn.style.background = '#8b7355';
                 }, 2000);
             }).catch(err => {
-                alert('Erro ao copiar o código. Tente novamente.');
+                // SweetAlert2 de erro
+                Swal.fire({
+                    title: 'Erro ao Copiar',
+                    text: 'Não foi possível copiar o código. Tente novamente.',
+                    icon: 'error',
+                    confirmButtonColor: '#8b7355'
+                });
             });
         }
         
         function simulatePayment() {
-            document.getElementById('successMessage').style.display = 'block';
-            document.getElementById('timer').innerHTML = '<i class="fas fa-check-circle"></i> Pagamento confirmado!';
-            document.getElementById('timer').style.color = '#32b572';
-            
-            // Desabilitar botões após pagamento
-            document.querySelectorAll('.btn').forEach(btn => {
-                btn.disabled = true;
-                btn.style.opacity = '0.6';
-                btn.style.cursor = 'not-allowed';
+            // Mostrar confirmação de pagamento
+            Swal.fire({
+                title: 'Confirmar Pagamento?',
+                text: 'Você confirma que realizou o pagamento PIX?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#32b572',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sim, pagamento realizado',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Processar pagamento confirmado
+                    processPaymentConfirmation();
+                }
             });
-            
-            setTimeout(() => {
-                alert('Pagamento confirmado! Obrigado pela preferência.');
-                // Redirecionar para index.php após o alerta
-                window.location.href = 'index.php';
-            }, 500);
+        }
+        
+        function processPaymentConfirmation() {
+            // Mostrar loading
+            Swal.fire({
+                title: 'Processando...',
+                text: 'Confirmando seu pagamento...',
+                icon: 'info',
+                timer: 2000,
+                timerProgressBar: true,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            }).then(() => {
+                // Atualizar interface
+                document.getElementById('successMessage').style.display = 'block';
+                document.getElementById('timer').innerHTML = '<i class="fas fa-check-circle"></i> Pagamento confirmado!';
+                document.getElementById('timer').style.color = '#32b572';
+                
+                // Desabilitar botões após pagamento
+                document.querySelectorAll('.btn').forEach(btn => {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.6';
+                    btn.style.cursor = 'not-allowed';
+                });
+                
+                // SweetAlert2 de sucesso
+                Swal.fire({
+                    title: 'Pagamento Confirmado!',
+                    text: 'Obrigado pela sua compra! Seu pedido será processado.',
+                    icon: 'success',
+                    confirmButtonColor: '#32b572',
+                    confirmButtonText: 'Continuar'
+                }).then(() => {
+                    // Limpar carrinho após pagamento confirmado
+                    fetch('limpar_carrinho.php')
+                        .then(response => response.json())
+                        .then(data => {
+                            // Redirecionar para index.php após confirmação
+                            window.location.href = 'index.php';
+                        })
+                        .catch(error => {
+                            console.error('Erro ao limpar carrinho:', error);
+                            window.location.href = 'index.php';
+                        });
+                });
+            });
         }
         
         // Iniciar timer

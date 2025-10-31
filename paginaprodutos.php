@@ -1,5 +1,6 @@
 <?php
 session_start();
+include 'conexao.php';
 
 // Inicializar carrinho se não existir
 if (!isset($_SESSION['carrinho'])) {
@@ -13,6 +14,97 @@ $usuarioNome = "";
 if (isset($_SESSION['id'])) {
     $usuarioLogado = true;
     $usuarioNome = $_SESSION['nome'];
+}
+
+// Buscar produtos do banco de dados
+$produtos = [];
+try {
+    $database = new PDO("mysql:host=localhost;dbname=lavelle_perfumes", "root", "");
+    $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    // ATUALIZADO: Buscar descricao_breve e descricao_longa
+    $query = "SELECT id, nome, descricao_breve, descricao_longa, preco, imagem, categoria, created_at FROM produtos ORDER BY created_at DESC";
+    $stmt = $database->prepare($query);
+    $stmt->execute();
+    $produtos_db = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Converter para o formato esperado pelo código existente
+    foreach($produtos_db as $produto_db) {
+        $produtos[] = [
+            "id" => $produto_db['id'],
+            "nome" => $produto_db['nome'],
+            "categoria" => $produto_db['categoria'] ?? 'Compartilhável',
+            "preco" => floatval($produto_db['preco']),
+            "preco_formatado" => "R$ " . number_format($produto_db['preco'], 2, ',', '.'),
+            // ATUALIZADO: Usar descricao_breve para o card e descricao_longa para o modal
+            "descricao" => $produto_db['descricao_breve'] ?? $produto_db['descricao_longa'] ?? 'Descrição não disponível',
+            "descricao_longa" => $produto_db['descricao_longa'] ?? $produto_db['descricao_breve'] ?? 'Descrição detalhada não disponível',
+            "notas" => [
+                "Notas de Saída: Bergamota, Laranja",
+                "Notas de Coração: Jasmim, Rosa, Íris", 
+                "Notas de Fundo: Baunilha, Âmbar, Musk"
+            ],
+            "badge" => "",
+            "badge_class" => "",
+            "imagem" => $produto_db['imagem']
+        ];
+    }
+    
+} catch(PDOException $e) {
+    // Se houver erro, usar produtos padrão como fallback
+    $produtos = [
+        [
+            "id" => 1,
+            "nome" => "Lavelle Aureum",
+            "categoria" => "Feminino",
+            "preco" => 299.90,
+            "preco_formatado" => "R$ 299,90",
+            "descricao" => "Fragrância floral intensa com notas de jasmim e baunilha. Perfeita para ocasiões especiais.",
+            "descricao_longa" => "A fragrância Lavelle Aureum é uma fragrância sofisticada que combina notas florais intensas com um toque sensual de baunilha. Desenvolvida para mulheres que buscam elegância e sofisticação, esta fragrância possui excelente fixação e projeção moderada, ideal para uso noturno e ocasiões especiais. Com uma duração de até 8 horas na pele, é a escolha perfeita para eventos formais e encontros românticos.",
+            "notas" => [
+                "Notas de Saída: Bergamota, Laranja",
+                "Notas de Coração: Jasmim, Rosa, Íris",
+                "Notas de Fundo: Baunilha, Âmbar, Musk"
+            ],
+            "badge" => "Novo",
+            "badge_class" => "new",
+            "imagem" => "lavelleaureum.jpg"
+        ],
+        [
+            "id" => 2,
+            "nome" => "Lavelle Intense Noir",
+            "categoria" => "Masculino",
+            "preco" => 349.90,
+            "preco_formatado" => "R$ 349,90",
+            "descricao" => "Perfume amadeirado com notas de sândalo e âmbar para o homem moderno.",
+            "descricao_longa" => "Intense Noir é uma fragrância masculina que transmite confiança e sofisticação. Com notas amadeiradas e especiarias, é perfeita para o homem contemporâneo que valoriza qualidade e personalidade. Desenvolvido com ingredientes selecionados, oferece duração excepcional e um aroma marcante que evolui ao longo do dia.",
+            "notas" => [
+                "Notas de Saída: Cardamomo, Pimenta Preta",
+                "Notas de Coração: Cedro, Sândalo",
+                "Notas de Fundo: Âmbar, Couro, Musk"
+            ],
+            "badge" => "",
+            "badge_class" => "",
+            "imagem" => "intense.png"
+        ],
+        [
+            "id" => 3,
+            "nome" => "Lavelle Rose Sublime",
+            "categoria" => "Feminino",
+            "preco" => 279.90,
+            "preco_formatado" => "R$ 279,90",
+            "descricao" => "Fragrância cítrica e fresca para o dia a dia, com notas vibrantes e energizantes.",
+            "descricao_longa" => "Lavelle Rose Sublime é a escolha perfeita para o dia a dia. Suas notas cítricas e frescas proporcionam uma sensação de limpeza e energia, ideal para mulheres ativas e modernas. Com uma combinação equilibrada de frutas cítricas e florais suaves, esta fragrância é versátil e adequada para qualquer ocasião.",
+            "notas" => [
+                "Notas de Saída: Limão Siciliano, Bergamota",
+                "Notas de Coração: Neroli, Lírio do Vale",
+                "Notas de Fundo: Musk Branco, Almíscar"
+            ],
+            "badge" => "Mais Vendido",
+            "badge_class" => "bestseller",
+            "imagem" => "Lavelle Rose Sublime.jpg"
+        ]
+    ];
 }
 
 // Processar adição ao carrinho
@@ -85,207 +177,6 @@ $categorias = [
     "Compartilhável",
 ];
 
-// Produtos com imagens personalizadas
-$produtos = [
-    [
-        "id" => 1,
-        "nome" => "Lavelle Aureum",
-        "categoria" => "Feminino",
-        "preco" => 299.90,
-        "preco_formatado" => "R$ 299,90",
-        "descricao" => "Fragrância floral intensa com notas de jasmim e baunilha. Perfeita para ocasiões especiais e noites inesquecíveis.",
-        "descricao_longa" => "A fragancia Lavelle Aureum é uma fragrância sofisticada que combina notas florais intensas com um toque sensual de baunilha. Desenvolvida para mulheres que buscam elegância e sofisticação, esta fragrância possui excelente fixação e projeção moderada, ideal para uso noturno e ocasiões especiais.",
-        "notas" => [
-            "Notas de Saída: Bergamota, Laranja",
-            "Notas de Coração: Jasmim, Rosa, Íris",
-            "Notas de Fundo: Baunilha, Âmbar, Musk"
-        ],
-        "badge" => "Novo",
-        "badge_class" => "new",
-        "imagem" => "lavelleaureum.jpg"
-    ],
-    [
-        "id" => 2,
-        "nome" => "Lavelle Intense Noir",
-        "categoria" => "Masculino",
-        "preco" => 349.90,
-        "preco_formatado" => "R$ 349,90",
-        "descricao" => "Perfume amadeirado com notas de sândalo e âmbar para o homem moderno.",
-        "descricao_longa" => "Intense Noir é uma fragrância masculina que transmite confiança e sofisticação. Com notas amadeiradas e especiarias, é perfeita para o homem contemporâneo que valoriza qualidade e personalidade.",
-        "notas" => [
-            "Notas de Saída: Cardamomo, Pimenta Preta",
-            "Notas de Coração: Cedro, Sândalo",
-            "Notas de Fundo: Âmbar, Couro, Musk"
-        ],
-        "badge" => "",
-        "badge_class" => "",
-        "imagem" => "intense.png"
-    ],
-    [
-        "id" => 3,
-        "nome" => "Lavelle Rose Sublime",
-        "categoria" => "Feminino",
-        "preco" => 279.90,
-        "preco_formatado" => "R$ 279,90",
-        "descricao" => "Fragrância cítrica e fresca para o dia a dia, com notas vibrantes e energizantes.",
-        "descricao_longa" => "Fraudaleza Mensa é a escolha perfeita para o dia a dia. Suas notas cítricas e frescas proporcionam uma sensação de limpeza e energia, ideal para mulheres ativas e modernas.",
-        "notas" => [
-            "Notas de Saída: Limão Siciliano, Bergamota",
-            "Notas de Coração: Neroli, Lírio do Vale",
-            "Notas de Fundo: Musk Branco, Almíscar"
-        ],
-        "badge" => "Mais Vendido",
-        "badge_class" => "bestseller",
-        "imagem" => "Lavelle Rose Sublime.jpg"
-    ],
-    [
-        "id" => 4,
-        "nome" => "Lavelle Pure Dream",
-        "categoria" => "Feminino",
-        "preco" => 319.90,
-        "preco_formatado" => "R$ 319,90",
-        "descricao" => "Notas amadeiradas e florais para todos os momentos e ocasiões.",
-        "descricao_longa" => "Uma fragrância versátil que pode ser usada por todos. Fraudaleza Convenciuária combina notas amadeiradas suaves com toques florais, criando uma experiência olfativa equilibrada e agradável.",
-        "notas" => [
-            "Notas de Saída: Toranja, Pêssego",
-            "Notas de Coração: Jasmim, Lírio",
-            "Notas de Fundo: Musk, Sândalo, Baunilha"
-        ],
-        "badge" => "",
-        "badge_class" => "",
-        "imagem" => "Pure Dream.jpg"
-    ],
-    [
-        "id" => 5,
-        "nome" => "Lavelle Echo",
-        "categoria" => "Compartilhável",
-        "preco" => 389.90,
-        "preco_formatado" => "R$ 389,90",
-        "descricao" => "Perfume sofisticado com notas de patchouli e musk para ocasiões especiais.",
-        "descricao_longa" => "Lavelle Echo é a essência da masculinidade sofisticada. Com notas intensas de patchouli e musk, esta fragrância é ideal para homens que buscam uma presença marcante e memorável.",
-        "notas" => [
-            "Notas de Saída: Lavanda, Alecrim",
-            "Notas de Coração: Patchouli, Vetiver",
-            "Notas de Fundo: Musk, Âmbar, Baunilha"
-        ],
-        "badge" => "Lançamento",
-        "badge_class" => "new",
-        "imagem" => "echo.jpg"
-    ],
-     [
-        "id" => 6,
-        "nome" => "Lavelle Verano",
-        "categoria" => "Compartilhável",
-        "preco" => 269.90,
-        "preco_formatado" => "R$ 269,90",
-        "descricao" => "Fragrância leve e floral com notas de frutas brancas para momentos especiais.",
-        "descricao_longa" => "Verano captura a essência da primavera em uma fragrância. Leve, floral e com toques frutados, é perfeita para mulheres que apreciam delicadeza e frescor.",
-        "notas" => [
-            "Notas de Saída: Pêra, Maçã Verde",
-            "Notas de Coração: Peônia, Frésia",
-            "Notas de Fundo: Almíscar, Âmbar Branco"
-        ],
-        "badge" => "",
-        "badge_class" => "",
-        "imagem" => "verano.jpg"
-    ],
-    [
-        "id" => 7,
-        "nome" => "Lavelle Horizon",
-        "categoria" => "Compartilhável",
-        "preco" => 269.90,
-        "preco_formatado" => "R$ 269,90",
-        "descricao" => "A fragrância que captura a essência da liberdade e do frescor, é perfeita para espíritos exploradores.",
-        "descricao_longa" => "A fragrância Lavelle Horizon é uma fragrância que evoca a imensidão do oceano e a leveza da brisa marinha. Desenvolvida para homens e mulheres que buscam liberdade, frescor e um espírito explorador, esta fragrância possui uma fixação duradoura e uma projeção refrescante, ideal para uso diário e momentos de aventura.",
-        "notas" => [
-            "Notas de Saída: Pêra, Maçã Verde",
-            "Notas de Coração: Peônia, Frésia",
-            "Notas de Fundo: Almíscar, Âmbar Branco"
-        ],
-        "badge" => "",
-        "badge_class" => "",
-        "imagem" => "horizon.png"
-    ],
-    [
-        "id" => 8,
-        "nome" => "Lavelle Aurore Florale",
-        "categoria" => "Compartilhável",
-        "preco" => 269.90,
-        "preco_formatado" => "R$ 269,90",
-        "descricao" => "A essência da natureza em um frasco. Uma fragrância floral e sustentável para o seu dia a dia.",
-        "descricao_longa" => "A fragrância Lavelle Aurore Florale é uma fragrância leve e delicada, inspirada na beleza de um amanhecer florido. Desenvolvida para mulheres que buscam uma conexão com a natureza e valorizam a sustentabilidade, esta fragrância possui uma fixação suave e uma projeção que remete à pureza, ideal para uso diário e momentos de contemplação.",
-        "notas" => [
-            "Notas de Saída: Folhas Verdes, Bergamota, Pêssego",
-            "Notas de Coração: Rosa, Frésia, Lírio do Vale",
-            "Notas de Fundo: Sândalo, Almíscar Branco, Âmbar"
-        ],
-        "badge" => "",
-        "badge_class" => "",
-        "imagem" => "auroreflorale2.png"
-    ],
-    [
-        "id" => 9,
-        "nome" => "Lavelle Soleil Doré",
-        "categoria" => "Compartilhável",
-        "preco" => 269.90,
-        "preco_formatado" => "R$ 269,90",
-        "descricao" => "Fragrância leve e floral com notas de frutas brancas para momentos especiais.",
-        "descricao_longa" => "A fragrância Lavelle Soleil Doré é uma celebração do sol e da elegância radiante. Criada para mulheres que exalam confiança e brilham intensamente, esta fragrância possui uma fixação luxuosa e uma projeção envolvente, ideal para qualquer ocasião que peça um toque de glamour e sofisticação.",
-        "notas" => [
-            "Notas de Saída: Flor de Laranjeira, Bergamota, Pêssego",
-            "Notas de Coração: Jasmim, Tuberosa, Ylang-Ylang",
-            "Notas de Fundo: Âmbar, Baunilha, Almíscar Branco"
-        ],
-        "badge" => "",
-        "badge_class" => "",
-        "imagem" => "soleildore3.png"
-    ],
-      [
-        "id" => 8,
-        "nome" => "Lavelle Aurore Florale",
-        "categoria" => "Compartilhável",
-        "preco" => 269.90,
-        "preco_formatado" => "R$ 269,90",
-        "descricao" => "A essência da natureza em um frasco. Uma fragrância floral e sustentável para o seu dia a dia.",
-        "descricao_longa" => "A fragrância Lavelle Aurore Florale é uma fragrância leve e delicada, inspirada na beleza de um amanhecer florido. Desenvolvida para mulheres que buscam uma conexão com a natureza e valorizam a sustentabilidade, esta fragrância possui uma fixação suave e uma projeção que remete à pureza, ideal para uso diário e momentos de contemplação.",
-        "notas" => [
-            "Notas de Saída: Folhas Verdes, Bergamota, Pêssego",
-            "Notas de Coração: Rosa, Frésia, Lírio do Vale",
-            "Notas de Fundo: Sândalo, Almíscar Branco, Âmbar"
-        ],
-        "badge" => "",
-        "badge_class" => "",
-        "imagem" => "auroreflorale2.png"
-    ], [
-        "id" => 8,
-        "nome" => "Lavelle Aurore Florale",
-        "categoria" => "Compartilhável",
-        "preco" => 269.90,
-        "preco_formatado" => "R$ 269,90",
-        "descricao" => "A essência da natureza em um frasco. Uma fragrância floral e sustentável para o seu dia a dia.",
-        "descricao_longa" => "A fragrância Lavelle Aurore Florale é uma fragrância leve e delicada, inspirada na beleza de um amanhecer florido. Desenvolvida para mulheres que buscam uma conexão com a natureza e valorizam a sustentabilidade, esta fragrância possui uma fixação suave e uma projeção que remete à pureza, ideal para uso diário e momentos de contemplação.",
-        "notas" => [
-            "Notas de Saída: Folhas Verdes, Bergamota, Pêssego",
-            "Notas de Coração: Rosa, Frésia, Lírio do Vale",
-            "Notas de Fundo: Sândalo, Almíscar Branco, Âmbar"
-        ],
-        "badge" => "",
-        "badge_class" => "",
-        "imagem" => "auroreflorale2.png"
-    ],
-    
-    
-];
-
-// Função para obter a imagem do produto (usa placeholder se a imagem não existir)
-function getProdutoImagem($produto) {
-    if (isset($produto['imagem']) && file_exists($produto['imagem'])) {
-        return $produto['imagem'];
-    }
-    // Fallback para placeholder
-    return "https://via.placeholder.com/250x300/f5f5f5/333?text=" . urlencode($produto['nome']);
-}
-
 // *** PAGINAÇÃO - DEVE VIR ANTES DO CÁLCULO DO CARRINHO ***
 
 // Configuração da paginação
@@ -326,7 +217,7 @@ if (!empty($_SESSION['carrinho'])) {
     }
 }
 
-// *** PROCESSAR FINALIZAÇÃO DA COMPRA - DEVE VIR DEPOIS DO CÁLCULO DO CARRINHO ***
+// *** PROCESSAR FINALIZAÇÃO DA COMPRA - ATUALIZADO ***
 
 // Processar finalização de compra
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
@@ -347,14 +238,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
     
     $metodo_pagamento = $_POST['metodo_pagamento'];
     
-    // Salvar total na sessão para usar nas páginas de pagamento
+    // *** CORREÇÃO: Salvar dados completos do carrinho na sessão ***
     $_SESSION['total_compra'] = $total_carrinho;
     $_SESSION['itens_carrinho'] = $_SESSION['carrinho'];
+    $_SESSION['produtos_carrinho'] = []; // Array para armazenar informações completas dos produtos
+    
+    // Preencher informações completas dos produtos no carrinho
+    foreach ($_SESSION['carrinho'] as $produto_id => $quantidade) {
+        foreach ($produtos as $produto) {
+            if ($produto['id'] == $produto_id) {
+                $_SESSION['produtos_carrinho'][$produto_id] = [
+                    'produto' => $produto,
+                    'quantidade' => $quantidade,
+                    'subtotal' => $produto['preco'] * $quantidade
+                ];
+                break;
+            }
+        }
+    }
     
     // Redirecionar para página de pagamento específica
     switch($metodo_pagamento) {
         case 'credit':
-            header('Location: pagamento_cartao.php?tipo=credito');
+            header('Location: pagamento_cartao.php');
             exit();
         case 'pix':
             header('Location: pagamento_pix.php');
@@ -366,6 +272,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
             header('Location: ' . $_SERVER['PHP_SELF']);
             exit();
     }
+}
+
+// Função para obter a imagem do produto (usa placeholder se a imagem não existir)
+function getProdutoImagem($produto) {
+    if (isset($produto['imagem']) && file_exists($produto['imagem'])) {
+        return $produto['imagem'];
+    }
+    // Fallback para placeholder
+    return "https://via.placeholder.com/250x300/f5f5f5/333?text=" . urlencode($produto['nome']);
 }
 ?>
 
@@ -871,7 +786,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
         }
 
         .cart-modal-content {
-            background-color: white;
+            background-color = white;
             margin: 50px auto;
             border-radius: 15px;
             width: 90%;
@@ -886,6 +801,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
             align-items: center;
             padding: 30px;
             border-bottom: 1px solid #eee;
+            background-color: #ffffff;
         }
 
         .cart-header h2 {
@@ -905,6 +821,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
             padding: 30px;
             max-height: 400px;
             overflow-y: auto;
+            background-color: #f5f5f5;
         }
 
         .cart-item {
@@ -1406,9 +1323,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
         .quantity-update-btn:hover {
             background: #f5f5f5;
         }
+        /* Header Banner */
+        .header-banner {
+            background-color: #000;
+            color: #ffffff;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 14px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #333;
+        }
+        
+        .header-banner h1 {
+            font-size: 14px;
+            font-weight: 300;
+            margin: 0;
+            padding: 0;
+            letter-spacing: 3px;
+            color: #f5f5f5;
+        }
+        
+        
     </style>
 </head>
 <body>
+     <div class="header-banner">
+        <h1>O perfume certo transforma a presença em memória.</h1>
+    </div>
+     
     <header>
         <div class="container">
             <div class="header-top">
@@ -1503,6 +1447,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
                 <div class="product-info">
                     <div class="product-category"><?php echo $produto['categoria']; ?></div>
                     <h3 class="product-name"><?php echo $produto['nome']; ?></h3>
+                    <!-- AQUI: descricao breve no card -->
                     <p class="product-description"><?php echo $produto['descricao']; ?></p>
                     <div class="product-price"><?php echo $produto['preco_formatado']; ?></div>
                     <div class="product-actions">
@@ -1696,7 +1641,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
                     </div>
                 </div>
                 
-                <button type="button" name="finalizar_compra" class="btn" style="width: 100%; margin-top: 20px;" onclick="handleFinalizarCompra()">
+                <button type="submit" name="finalizar_compra" class="btn" style="width: 100%; margin-top: 20px;">
                     Confirmar Pedido - R$ <?php echo number_format($total_carrinho, 2, ',', '.'); ?>
                 </button>
             </form>
@@ -1815,7 +1760,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
             document.getElementById('cartTotal').textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
             
             // Atualizar botão de finalizar compra no modal de pagamento
-            const finalizeButton = document.querySelector('#paymentForm button[type="button"]');
+            const finalizeButton = document.querySelector('#paymentForm button[type="submit"]');
             if (finalizeButton) {
                 finalizeButton.textContent = 'Confirmar Pedido - R$ ' + total.toFixed(2).replace('.', ',');
             }
@@ -1952,6 +1897,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
                     <div class="product-detail-category">${product.categoria}</div>
                     <h2>${product.nome}</h2>
                     <div class="product-detail-price">${product.preco_formatado}</div>
+                    <!-- AQUI: descricao longa no modal -->
                     <p class="product-detail-description">${product.descricao_longa}</p>
                     
                     <div class="product-detail-features">
@@ -2030,48 +1976,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
             const selectedElement = document.querySelector(`.payment-method input[value="${method}"]`).parentElement;
             selectedElement.classList.add('selected');
             document.getElementById(method).checked = true;
-        }
-
-        // Função para finalizar compra
-        async function handleFinalizarCompra() {
-            const selectedPayment = document.querySelector('input[name="metodo_pagamento"]:checked');
-            if (!selectedPayment) {
-                Swal.fire({
-                    title: 'Forma de Pagamento',
-                    text: 'Por favor, selecione uma forma de pagamento.',
-                    icon: 'warning',
-                    confirmButtonColor: '#8b7355'
-                });
-                return;
-            }
-            
-            const result = await Swal.fire({
-                title: 'Confirmar Compra?',
-                text: 'Esta ação não pode ser desfeita.',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Sim, Confirmar',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#27ae60',
-                cancelButtonColor: '#d33'
-            });
-            
-            if (result.isConfirmed) {
-                Swal.fire({
-                    title: 'Processando...',
-                    text: 'Redirecionando para o pagamento...',
-                    icon: 'info',
-                    timer: 1500,
-                    timerProgressBar: true,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    },
-                    willClose: () => {
-                        // Submeter o formulário após o alerta
-                        document.getElementById('paymentForm').submit();
-                    }
-                });
-            }
         }
         
         // Função para ordenar produtos

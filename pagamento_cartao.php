@@ -1,6 +1,17 @@
 <?php
 session_start();
-$total_compra = $_SESSION['total_compra'];
+
+// Verificar se a variável de sessão existe
+if (isset($_SESSION['total_compra'])) {
+    $total_compra = $_SESSION['total_compra'];
+} else {
+    // Se não existir, definir um valor padrão ou redirecionar
+    $total_compra = 0;
+    // Ou redirecionar de volta para o carrinho
+    // header('Location: carrinho.php');
+    // exit;
+}
+
 $tipo_cartao = isset($_GET['tipo']) ? $_GET['tipo'] : 'credito';
 $tipo_nome = $tipo_cartao == 'credito' ? 'Crédito' : 'Débito';
 ?>
@@ -11,6 +22,8 @@ $tipo_nome = $tipo_cartao == 'credito' ? 'Crédito' : 'Débito';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pagamento Cartão - LAVELLE</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Incluir SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         * {
             margin: 0;
@@ -536,7 +549,7 @@ $tipo_nome = $tipo_cartao == 'credito' ? 'Crédito' : 'Débito';
             }
         }
         
-        function processPayment() {
+        async function processPayment() {
             const cardNumber = document.getElementById('cardNumber').value.replace(/\D/g, '');
             const cardName = document.getElementById('cardName').value;
             const cardExpiry = document.getElementById('cardExpiry').value;
@@ -563,21 +576,68 @@ $tipo_nome = $tipo_cartao == 'credito' ? 'Crédito' : 'Débito';
                 return;
             }
             
+            // Mostrar confirmação com SweetAlert2
+            const result = await Swal.fire({
+                title: 'Confirmar Pagamento?',
+                html: `
+                    <div style="text-align: left;">
+                        <p><strong>Valor:</strong> R$ <?php echo number_format($total_compra, 2, ',', '.'); ?></p>
+                        <p><strong>Cartão:</strong> **** **** **** ${cardNumber.slice(-4)}</p>
+                        <p><strong>Tipo:</strong> <?php echo $tipo_nome; ?></p>
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sim, Confirmar Pagamento',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#32b572',
+                cancelButtonColor: '#d33'
+            });
+            
+            if (!result.isConfirmed) {
+                return;
+            }
+            
             // Simular processamento
             const btn = document.querySelector('.btn');
             const originalText = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
             btn.disabled = true;
             
-            setTimeout(() => {
+            // Mostrar loading com SweetAlert2
+            Swal.fire({
+                title: 'Processando Pagamento',
+                text: 'Aguarde enquanto processamos seu pagamento...',
+                icon: 'info',
+                timer: 2000,
+                timerProgressBar: true,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            }).then(() => {
+                // Atualizar botão
                 btn.innerHTML = '<i class="fas fa-check"></i> Pagamento Confirmado!';
                 btn.style.background = '#28a745';
                 
-                setTimeout(() => {
-                    alert('✅ Pagamento processado com sucesso! Obrigado pela sua compra.');
+                // Mostrar sucesso com SweetAlert2
+                Swal.fire({
+                    title: 'Pagamento Confirmado!',
+                    html: `
+                        <div style="text-align: center;">
+                            <i class="fas fa-check-circle" style="font-size: 48px; color: #32b572; margin-bottom: 20px;"></i>
+                            <p>Pagamento processado com sucesso!</p>
+                            <p><strong>Obrigado pela sua compra.</strong></p>
+                        </div>
+                    `,
+                    icon: 'success',
+                    confirmButtonText: 'Continuar',
+                    confirmButtonColor: '#32b572'
+                }).then(() => {
+                    // Redirecionar após confirmação
                     window.location.href = 'paginaprodutos.php?pagamento=sucesso';
-                }, 1000);
-            }, 2000);
+                });
+            });
         }
         
         function showValidationError(fieldId, message) {

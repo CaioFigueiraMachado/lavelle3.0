@@ -50,6 +50,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $_SESSION['id'] = $usuario['id'];
                         $_SESSION['nome'] = $usuario['nome'];
                         $_SESSION['email'] = $usuario['email'];
+                        
+                        // VERIFICAÇÃO DO ADMIN - ADICIONADO AQUI
+                        if ($email === 'admlavelle@gmail.com') {
+                            $_SESSION['is_admin'] = true;
+                        } else {
+                            $_SESSION['is_admin'] = false;
+                        }
+                        
                         header("Location: index.php"); // Redireciona para a página inicial após o login
                         exit();
                     } else {
