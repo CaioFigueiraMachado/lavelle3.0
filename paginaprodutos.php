@@ -44,8 +44,9 @@ try {
                 "Notas de Coração: Jasmim, Rosa, Íris", 
                 "Notas de Fundo: Baunilha, Âmbar, Musk"
             ],
+            
             "badge" => "",
-            "badge_class" => "",
+            "badge_class" => "",    
             "imagem" => $produto_db['imagem']
         ];
     }
@@ -217,7 +218,7 @@ if (!empty($_SESSION['carrinho'])) {
     }
 }
 
-// *** PROCESSAR FINALIZAÇÃO DA COMPRA - ATUALIZADO ***
+// *** PROCESSAR FINALIZAÇÃO DA COMPRA - ATUALIZADO COM SWEETALERT ***
 
 // Processar finalização de compra
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
@@ -257,21 +258,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
         }
     }
     
-    // Redirecionar para página de pagamento específica
+    // *** ADICIONAR: Flag para mostrar SweetAlert antes do redirecionamento ***
+    $_SESSION['show_payment_redirect'] = true;
+    $_SESSION['payment_method'] = $metodo_pagamento;
+    $_SESSION['redirect_url'] = ''; // Definir a URL de redirecionamento
+    
+    // Definir URL de redirecionamento baseada no método de pagamento
     switch($metodo_pagamento) {
         case 'credit':
-            header('Location: pagamento_cartao.php');
-            exit();
+            $_SESSION['redirect_url'] = 'pagamento_cartao.php';
+            break;
         case 'pix':
-            header('Location: pagamento_pix.php');
-            exit();
+            $_SESSION['redirect_url'] = 'pagamento_pix.php';
+            break;
         case 'boleto':
-            header('Location: pagamento_boleto.php');
-            exit();
+            $_SESSION['redirect_url'] = 'pagamento_boleto.php';
+            break;
         default:
-            header('Location: ' . $_SERVER['PHP_SELF']);
-            exit();
+            $_SESSION['redirect_url'] = $_SERVER['PHP_SELF'];
+            break;
     }
+    
+    // Redirecionar de volta para a mesma página para mostrar o SweetAlert
+    header('Location: ' . $_SERVER['PHP_SELF'] . '?show_redirect=true');
+    exit();
 }
 
 // Função para obter a imagem do produto (usa placeholder se a imagem não existir)
@@ -786,7 +796,7 @@ function getProdutoImagem($produto) {
         }
 
         .cart-modal-content {
-            background-color = white;
+            background-color: white;
             margin: 50px auto;
             border-radius: 15px;
             width: 90%;
@@ -1674,6 +1684,72 @@ function getProdutoImagem($produto) {
             });
         </script>
         <?php unset($_SESSION['erro_carrinho']); ?>
+    <?php endif; ?>
+    
+    <!-- SweetAlert para redirecionamento de pagamento -->
+    <?php if (isset($_GET['show_redirect']) && isset($_SESSION['show_payment_redirect']) && $_SESSION['show_payment_redirect']): ?>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const paymentMethod = '<?php echo $_SESSION["payment_method"]; ?>';
+            const redirectUrl = '<?php echo $_SESSION["redirect_url"]; ?>';
+            const totalCompra = '<?php echo number_format($total_carrinho, 2, ',', '.'); ?>';
+            
+            let methodName = '';
+            let methodDesc = '';
+            
+            switch(paymentMethod) {
+                case 'credit':
+                    methodName = 'Cartão de Crédito';
+                    methodDesc = 'Parcelamento em até 12x';
+                    break;
+                case 'pix':
+                    methodName = 'PIX';
+                    methodDesc = '15% de desconto';
+                    break;
+                case 'boleto':
+                    methodName = 'Boleto Bancário';
+                    methodDesc = 'Pagamento em 1x';
+                    break;
+            }
+            
+            Swal.fire({
+                title: 'Redirecionando para Pagamento',
+                html: `
+                    <div style="text-align: left;">
+                        <p><strong>Método selecionado:</strong> ${methodName}</p>
+                        <p><strong>Descrição:</strong> ${methodDesc}</p>
+                        <p><strong>Valor total:</strong> R$ ${totalCompra}</p>
+                        <p style="margin-top: 15px; font-style: italic;">Você será redirecionado em instantes...</p>
+                    </div>
+                `,
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: 'Continuar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#8b7355',
+                cancelButtonColor: '#6c757d',
+                timer: 5000,
+                timerProgressBar: true,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = redirectUrl;
+                } else if (result.dismiss === Swal.DismissReason.cancel) {
+                    window.location.href = '<?php echo $_SERVER["PHP_SELF"]; ?>';
+                } else if (result.dismiss === Swal.DismissReason.timer) {
+                    window.location.href = redirectUrl;
+                }
+            });
+        });
+    </script>
+    <?php 
+        // Limpar a flag após mostrar o alerta
+        unset($_SESSION['show_payment_redirect']);
+        unset($_SESSION['payment_method']);
+        unset($_SESSION['redirect_url']);
+    ?>
     <?php endif; ?>
     
     <footer>
