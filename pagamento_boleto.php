@@ -431,7 +431,7 @@ $vencimento = date('d/m/Y', strtotime('+2 weekdays'));
                 <button class="btn" onclick="copyBarcode()">
                     <i class="far fa-copy"></i> Copiar Código
                 </button>
-                <button class="btn" onclick="simulatePayment()">
+                <button class="btn" onclick="simulatePayment()" >
                     <i class="fas fa-check"></i> Confirmar Pagamento
                 </button>
             </div>

@@ -26,27 +26,14 @@ if($_POST && isset($_POST['action'])) {
     error_log("ACTION: $action");
     
     if($action === 'create') {
-        // DEBUG DETALHADO DOS CAMPOS
-        error_log("CAMPO nome: '" . ($_POST['nome'] ?? 'NULL') . "'");
-        error_log("CAMPO email: '" . ($_POST['email'] ?? 'NULL') . "'");
-        error_log("CAMPO senha EXISTS: " . (isset($_POST['senha']) ? 'YES' : 'NO'));
-        error_log("CAMPO senha VALUE: '" . ($_POST['senha'] ?? 'NULL') . "'");
-        error_log("CAMPO senha LENGTH: " . (isset($_POST['senha']) ? strlen($_POST['senha']) : '0'));
-        
         // Criar usuário
         $nome = $_POST['nome'] ?? '';
         $email = $_POST['email'] ?? '';
         $senha = $_POST['senha'] ?? '';
         
-        // DEBUG DA VALIDAÇÃO
-        error_log("VALIDATION - nome empty: " . (empty($nome) ? 'YES' : 'NO'));
-        error_log("VALIDATION - email empty: " . (empty($email) ? 'YES' : 'NO'));
-        error_log("VALIDATION - senha empty: " . (empty($senha) ? 'YES' : 'NO'));
-        
         if(empty($nome) || empty($email) || empty($senha)) {
             $mensagem = "Nome, email e senha são obrigatórios!";
             $tipo_mensagem = "error";
-            error_log("VALIDATION FAILED");
         } else {
             try {
                 // Verificar se email já existe
@@ -67,16 +54,88 @@ if($_POST && isset($_POST['action'])) {
                     
                     $mensagem = "Usuário criado com sucesso!";
                     $tipo_mensagem = "success";
-                    error_log("USER CREATED SUCCESSFULLY");
                 }
             } catch(PDOException $e) {
                 $mensagem = "Erro ao criar usuário: " . $e->getMessage();
                 $tipo_mensagem = "error";
-                error_log("ERROR: " . $e->getMessage());
             }
         }
     }
-    // ... resto do código para update e delete
+    elseif($action === 'update') {
+        // Atualizar usuário
+        $id = $_POST['id'] ?? '';
+        $nome = $_POST['nome'] ?? '';
+        $email = $_POST['email'] ?? '';
+        $senha = $_POST['senha'] ?? '';
+        
+        if(empty($id) || empty($nome) || empty($email)) {
+            $mensagem = "ID, nome e email são obrigatórios!";
+            $tipo_mensagem = "error";
+        } else {
+            try {
+                // Verificar se email já existe em outro usuário
+                $checkQuery = "SELECT id FROM usuarios WHERE email = ? AND id != ?";
+                $checkStmt = $db->prepare($checkQuery);
+                $checkStmt->execute([$email, $id]);
+                
+                if($checkStmt->fetch()) {
+                    $mensagem = "Este email já está cadastrado em outro usuário!";
+                    $tipo_mensagem = "error";
+                } else {
+                    if(!empty($senha)) {
+                        // Atualizar com senha
+                        $senha_hash = password_hash($senha, PASSWORD_DEFAULT);
+                        $query = "UPDATE usuarios SET nome = ?, email = ?, senha = ? WHERE id = ?";
+                        $stmt = $db->prepare($query);
+                        $stmt->execute([$nome, $email, $senha_hash, $id]);
+                    } else {
+                        // Atualizar sem alterar senha
+                        $query = "UPDATE usuarios SET nome = ?, email = ? WHERE id = ?";
+                        $stmt = $db->prepare($query);
+                        $stmt->execute([$nome, $email, $id]);
+                    }
+                    
+                    $mensagem = "Usuário atualizado com sucesso!";
+                    $tipo_mensagem = "success";
+                }
+            } catch(PDOException $e) {
+                $mensagem = "Erro ao atualizar usuário: " . $e->getMessage();
+                $tipo_mensagem = "error";
+            }
+        }
+    }
+    elseif($action === 'delete') {
+        // Excluir usuário
+        $id = $_POST['id'] ?? '';
+        
+        if(empty($id)) {
+            $mensagem = "ID do usuário é obrigatório!";
+            $tipo_mensagem = "error";
+        } else {
+            try {
+                // Verificar se é o próprio usuário
+                if($id == $_SESSION['id']) {
+                    $mensagem = "Você não pode excluir seu próprio usuário!";
+                    $tipo_mensagem = "error";
+                } else {
+                    $query = "DELETE FROM usuarios WHERE id = ?";
+                    $stmt = $db->prepare($query);
+                    $stmt->execute([$id]);
+                    
+                    if($stmt->rowCount() > 0) {
+                        $mensagem = "Usuário excluído com sucesso!";
+                        $tipo_mensagem = "success";
+                    } else {
+                        $mensagem = "Usuário não encontrado!";
+                        $tipo_mensagem = "error";
+                    }
+                }
+            } catch(PDOException $e) {
+                $mensagem = "Erro ao excluir usuário: " . $e->getMessage();
+                $tipo_mensagem = "error";
+            }
+        }
+    }
 }
 
 // Buscar todos os usuários
@@ -118,7 +177,6 @@ include 'includes/sidebar.php';
                             <th>ID</th>
                             <th>Nome</th>
                             <th>Email</th>
-                          
                             <th>Data Cadastro</th>
                             <th>Ações</th>
                         </tr>
@@ -129,7 +187,6 @@ include 'includes/sidebar.php';
                             <td><?php echo $usuario['id']; ?></td>
                             <td><?php echo htmlspecialchars($usuario['nome']); ?></td>
                             <td><?php echo htmlspecialchars($usuario['email']); ?></td>
-                            
                             <td>
                                 <?php 
                                 if(isset($usuario['created_at'])) {
@@ -156,15 +213,15 @@ include 'includes/sidebar.php';
     </div>
 </div>
 
-<!-- Modal Usuário - VERSÃO SIMPLIFICADA SEM JAVASCRIPT -->
+<!-- Modal Usuário -->
 <div id="usuarioModal" class="modal">
     <div class="modal-content">
         <span class="close" onclick="closeModal()">&times;</span>
         <h2 id="modalTitle">Novo Usuário</h2>
         
-        <!-- FORMULÁRIO SIMPLES SEM JAVASCRIPT -->
         <form id="usuarioForm" method="POST" action="usuarios.php">
-            <input type="hidden" name="action" value="create">
+            <input type="hidden" name="action" id="formAction" value="create">
+            <input type="hidden" name="id" id="userId">
             
             <div class="form-group">
                 <label for="nome">Nome:*</label>
@@ -177,8 +234,8 @@ include 'includes/sidebar.php';
             </div>
 
             <div class="form-group">
-                <label for="senha">Senha:*</label>
-                <input type="password" id="senha" name="senha" required class="form-input" placeholder="Digite a senha (mínimo 6 caracteres)">
+                <label for="senha">Senha:<?php echo '<span id="senhaObrigatoria">*</span><span id="senhaOpcional" style="display:none"> (deixe em branco para manter a atual)</span>'; ?></label>
+                <input type="password" id="senha" name="senha" class="form-input" placeholder="Digite a senha">
             </div>
             
             <div class="form-actions">
@@ -194,7 +251,7 @@ include 'includes/sidebar.php';
     <div class="modal-content">
         <h2>Confirmar Exclusão</h2>
         <p>Tem certeza que deseja excluir este usuário?</p>
-        <form id="deleteForm" method="POST">
+        <form id="deleteForm" method="POST" action="usuarios.php">
             <input type="hidden" name="action" value="delete">
             <input type="hidden" id="deleteId" name="id">
             <div class="form-actions">
@@ -208,9 +265,26 @@ include 'includes/sidebar.php';
 <?php include 'includes/footer.php'; ?>
 
 <script>
-// JavaScript MÍNIMO - apenas para abrir/fechar modais
+// Funções JavaScript
 function openModal(action) {
-    document.getElementById('usuarioModal').style.display = 'block';
+    const modal = document.getElementById('usuarioModal');
+    const title = document.getElementById('modalTitle');
+    const formAction = document.getElementById('formAction');
+    const senhaObrigatoria = document.getElementById('senhaObrigatoria');
+    const senhaOpcional = document.getElementById('senhaOpcional');
+    const senhaInput = document.getElementById('senha');
+    
+    if(action === 'create') {
+        title.textContent = 'Novo Usuário';
+        formAction.value = 'create';
+        document.getElementById('userId').value = '';
+        document.getElementById('usuarioForm').reset();
+        senhaObrigatoria.style.display = 'inline';
+        senhaOpcional.style.display = 'none';
+        senhaInput.required = true;
+    }
+    
+    modal.style.display = 'block';
 }
 
 function closeModal() {
@@ -218,8 +292,27 @@ function closeModal() {
 }
 
 function editUsuario(id, nome, email) {
-    // Implementação básica para editar
-    alert('Funcionalidade de editar será implementada após resolver o problema de criação');
+    const modal = document.getElementById('usuarioModal');
+    const title = document.getElementById('modalTitle');
+    const formAction = document.getElementById('formAction');
+    const userId = document.getElementById('userId');
+    const nomeInput = document.getElementById('nome');
+    const emailInput = document.getElementById('email');
+    const senhaObrigatoria = document.getElementById('senhaObrigatoria');
+    const senhaOpcional = document.getElementById('senhaOpcional');
+    const senhaInput = document.getElementById('senha');
+    
+    title.textContent = 'Editar Usuário';
+    formAction.value = 'update';
+    userId.value = id;
+    nomeInput.value = nome;
+    emailInput.value = email;
+    senhaInput.value = '';
+    senhaObrigatoria.style.display = 'none';
+    senhaOpcional.style.display = 'inline';
+    senhaInput.required = false;
+    
+    modal.style.display = 'block';
 }
 
 function deleteUsuario(id) {

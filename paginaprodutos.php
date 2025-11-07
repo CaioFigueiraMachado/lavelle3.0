@@ -21,20 +21,77 @@ if (isset($_SESSION['id'])) {
 // Verificar se há filtro de categoria
 $categoria_filtro = isset($_GET['categoria']) ? $_GET['categoria'] : 'Todos';
 
+// VERIFICAÇÃO DE PESQUISA
+$termo_pesquisa = isset($_GET['pesquisa']) ? trim($_GET['pesquisa']) : '';
+
+// PARÂMETROS DE ORDENAÇÃO E PAGINAÇÃO
+$ordenar_por = isset($_GET['ordenar']) ? $_GET['ordenar'] : 'recent';
+$produtos_por_pagina = isset($_GET['mostrar']) ? (int)$_GET['mostrar'] : 9;
+
+// Validar valores para produtos por página
+$produtos_por_pagina_opcoes = [9, 12, 24];
+if (!in_array($produtos_por_pagina, $produtos_por_pagina_opcoes)) {
+    $produtos_por_pagina = 9;
+}
+
 // Buscar produtos do banco de dados
 $produtos = [];
 try {
     $database = new PDO("mysql:host=localhost;dbname=lavelle_perfumes", "root", "");
     $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
-    // Query modificada para filtrar por categoria
+    // Query modificada para filtrar por categoria E/OU pesquisa
+    $where_conditions = [];
+    $params = [];
+    
     if ($categoria_filtro != 'Todos') {
-        $query = "SELECT id, nome, descricao_breve, descricao_longa, preco, imagem, categoria, created_at FROM produtos WHERE categoria = :categoria ORDER BY created_at DESC";
-        $stmt = $database->prepare($query);
-        $stmt->bindParam(':categoria', $categoria_filtro);
-    } else {
-        $query = "SELECT id, nome, descricao_breve, descricao_longa, preco, imagem, categoria, created_at FROM produtos ORDER BY created_at DESC";
-        $stmt = $database->prepare($query);
+        $where_conditions[] = "categoria = :categoria";
+        $params[':categoria'] = $categoria_filtro;
+    }
+    
+    if (!empty($termo_pesquisa)) {
+        $where_conditions[] = "(nome LIKE :pesquisa OR descricao_breve LIKE :pesquisa OR descricao_longa LIKE :pesquisa)";
+        $params[':pesquisa'] = '%' . $termo_pesquisa . '%';
+    }
+    
+    // Construir query base
+    $query = "SELECT id, nome, descricao_breve, descricao_longa, preco, imagem, categoria, created_at FROM produtos";
+    
+    if (!empty($where_conditions)) {
+        $query .= " WHERE " . implode(" AND ", $where_conditions);
+    }
+    
+    // Adicionar ordenação baseada no parâmetro
+    switch($ordenar_por) {
+        case 'price-low':
+            $query .= " ORDER BY preco ASC";
+            break;
+        case 'price-high':
+            $query .= " ORDER BY preco DESC";
+            break;
+        case 'popular':
+            // Ordenar por produtos com badge "Mais Vendido" primeiro (simulação)
+            $query .= " ORDER BY 
+                CASE 
+                    WHEN nome LIKE '%Lavelle Rose Sublime%' THEN 1
+                    WHEN nome LIKE '%Lavelle Aureum%' THEN 2
+                    ELSE 3 
+                END, created_at DESC";
+            break;
+        case 'oldest':
+            // NOVO: Ordenar do mais antigo para o mais novo
+            $query .= " ORDER BY created_at ASC";
+            break;
+        case 'recent':
+        default:
+            $query .= " ORDER BY created_at DESC";
+            break;
+    }
+    
+    $stmt = $database->prepare($query);
+    
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value);
     }
     
     $stmt->execute();
@@ -56,10 +113,10 @@ try {
                 "Notas de Coração: Jasmim, Rosa, Íris", 
                 "Notas de Fundo: Baunilha, Âmbar, Musk"
             ],
-            
             "badge" => "",
             "badge_class" => "",    
-            "imagem" => $produto_db['imagem']
+            "imagem" => $produto_db['imagem'],
+            "created_at" => $produto_db['created_at']
         ];
     }
     
@@ -81,7 +138,8 @@ try {
             ],
             "badge" => "Novo",
             "badge_class" => "new",
-            "imagem" => "lavelleaureum.jpg"
+            "imagem" => "lavelleaureum.jpg",
+            "created_at" => date('Y-m-d H:i:s')
         ],
         [
             "id" => 2,
@@ -98,7 +156,8 @@ try {
             ],
             "badge" => "",
             "badge_class" => "",
-            "imagem" => "intense.png"
+            "imagem" => "intense.png",
+            "created_at" => date('Y-m-d H:i:s', strtotime('-1 day'))
         ],
         [
             "id" => 3,
@@ -115,7 +174,8 @@ try {
             ],
             "badge" => "Mais Vendido",
             "badge_class" => "bestseller",
-            "imagem" => "Lavelle Rose Sublime.jpg"
+            "imagem" => "Lavelle Rose Sublime.jpg",
+            "created_at" => date('Y-m-d H:i:s', strtotime('-2 days'))
         ]
     ];
 }
@@ -155,7 +215,12 @@ if (isset($_GET['remover'])) {
     if (isset($_SESSION['carrinho'][$produto_id])) {
         unset($_SESSION['carrinho'][$produto_id]);
     }
-    header('Location: ' . $_SERVER['PHP_SELF'] . '?categoria=' . urlencode($categoria_filtro));
+    
+    // Redirecionar mantendo todos os parâmetros
+    $query_params = $_GET;
+    unset($query_params['remover']);
+    $redirect_url = $_SERVER['PHP_SELF'] . '?' . http_build_query($query_params);
+    header('Location: ' . $redirect_url);
     exit();
 }
 
@@ -175,7 +240,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['atualizar_carrinho']))
             $_SESSION['carrinho'][$produto_id] = $quantidade;
         }
     }
-    header('Location: ' . $_SERVER['PHP_SELF'] . '?categoria=' . urlencode($categoria_filtro));
+    
+    // Redirecionar mantendo todos os parâmetros
+    $query_params = $_GET;
+    $redirect_url = $_SERVER['PHP_SELF'] . '?' . http_build_query($query_params);
+    header('Location: ' . $redirect_url);
     exit();
 }
 
@@ -190,14 +259,13 @@ $categorias = [
     "Compartilhável",
 ];
 
-// *** PAGINAÇÃO - DEVE VIR ANTES DO CÁLCULO DO CARRINHO ***
+// *** PAGINAÇÃO ***
 
 // Configuração da paginação
-$produtos_por_pagina = 9;
 $total_produtos = count($produtos);
 $total_paginas = ceil($total_produtos / $produtos_por_pagina);
 
-// Obter página atual - considerar categoria na paginação
+// Obter página atual
 $pagina_atual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
 if ($pagina_atual < 1) $pagina_atual = 1;
 if ($pagina_atual > $total_paginas) $pagina_atual = $total_paginas;
@@ -206,7 +274,7 @@ if ($pagina_atual > $total_paginas) $pagina_atual = $total_paginas;
 $inicio = ($pagina_atual - 1) * $produtos_por_pagina;
 $produtos_pagina = array_slice($produtos, $inicio, $produtos_por_pagina);
 
-// *** AGORA CALCULAR O TOTAL DO CARRINHO ***
+// *** CALCULAR O TOTAL DO CARRINHO ***
 
 // Calcular total do carrinho
 $total_carrinho = 0;
@@ -230,7 +298,7 @@ if (!empty($_SESSION['carrinho'])) {
     }
 }
 
-// *** PROCESSAR FINALIZAÇÃO DA COMPRA - ATUALIZADO COM ETAPA DE ENDEREÇO ***
+// *** PROCESSAR FINALIZAÇÃO DA COMPRA ***
 
 // Processar finalização de compra
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
@@ -245,13 +313,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
     if (empty($_SESSION['carrinho'])) {
         // Adicionar mensagem de erro na sessão
         $_SESSION['erro_carrinho'] = "Seu carrinho está vazio! Adicione produtos antes de finalizar a compra.";
-        header('Location: ' . $_SERVER['PHP_SELF'] . '?categoria=' . urlencode($categoria_filtro));
+        header('Location: ' . $_SERVER['PHP_SELF'] . '?' . http_build_query($_GET));
         exit();
     }
     
     $metodo_pagamento = $_POST['metodo_pagamento'];
     
-    // *** NOVO: Salvar método de pagamento na sessão e redirecionar para endereço ***
+    // Salvar método de pagamento na sessão e redirecionar para endereço
     $_SESSION['metodo_pagamento'] = $metodo_pagamento;
     $_SESSION['total_compra'] = $total_carrinho;
     $_SESSION['itens_carrinho'] = $_SESSION['carrinho'];
@@ -271,12 +339,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
         }
     }
     
-    // *** NOVO: Redirecionar para página de endereço em vez de pagamento direto ***
+    // Redirecionar para página de endereço
     header('Location: endereco_entrega.php');
     exit();
 }
 
-// *** NOVO: Processar envio do formulário de endereço ***
+// *** PROCESSAR ENVIO DO FORMULÁRIO DE ENDEREÇO ***
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirmar_endereco'])) {
     // Verificar se usuário está logado
     if (!$usuarioLogado) {
@@ -290,7 +358,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirmar_endereco']))
     foreach ($required_fields as $field) {
         if (empty($_POST[$field])) {
             $_SESSION['erro_endereco'] = "Por favor, preencha todos os campos obrigatórios.";
-            header('Location: ' . $_SERVER['PHP_SELF'] . '?categoria=' . urlencode($categoria_filtro));
+            header('Location: ' . $_SERVER['PHP_SELF'] . '?' . http_build_query($_GET));
             exit();
         }
     }
@@ -332,7 +400,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirmar_endereco']))
     }
     
     // Redirecionar de volta para mostrar o SweetAlert de confirmação
-    header('Location: ' . $_SERVER['PHP_SELF'] . '?show_redirect=true&categoria=' . urlencode($categoria_filtro));
+    $query_params = $_GET;
+    $query_params['show_redirect'] = 'true';
+    header('Location: ' . $_SERVER['PHP_SELF'] . '?' . http_build_query($query_params));
     exit();
 }
 
@@ -344,6 +414,15 @@ function getProdutoImagem($produto) {
     // Fallback para placeholder
     return "https://via.placeholder.com/250x300/f5f5f5/333?text=" . urlencode($produto['nome']);
 }
+
+// Função para construir URL com parâmetros
+function buildUrl($params = []) {
+    $current_params = $_GET;
+    foreach ($params as $key => $value) {
+        $current_params[$key] = $value;
+    }
+    return $_SERVER['PHP_SELF'] . '?' . http_build_query($current_params);
+}
 ?>
 
 <!DOCTYPE html>
@@ -353,6 +432,7 @@ function getProdutoImagem($produto) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Produtos - LAVELLE Perfumes</title>
     <style>
+        /* [Todo o CSS anterior permanece igual] */
         /* Link ADM - NOVO ESTILO */
         .user-menu a.admin-link {
             background-color: #8b7355;
@@ -550,6 +630,51 @@ function getProdutoImagem($produto) {
             border-radius: 5px;
             background-color: white;
             font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .filter-select:focus {
+            outline: none;
+            border-color: #8b7355;
+        }
+        
+        /* Estilos para a barra de pesquisa */
+        .search-bar {
+            display: flex;
+            align-items: center;
+        }
+
+        .search-input {
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 14px;
+            width: 200px;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #8b7355;
+            width: 250px;
+        }
+
+        .search-btn {
+            background: #000;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .search-btn:hover {
+            background-color: #333;
         }
         
         /* Produtos */
@@ -1300,8 +1425,19 @@ function getProdutoImagem($produto) {
             }
             
             .filters {
+                flex-direction: column;
+                gap: 10px;
                 width: 100%;
-                justify-content: space-between;
+            }
+            
+            .search-bar {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .search-input {
+                width: 100%;
+                max-width: 300px;
             }
             
             .product-detail {
@@ -1421,8 +1557,6 @@ function getProdutoImagem($produto) {
             letter-spacing: 3px;
             color: #f5f5f5;
         }
-        
-        
     </style>
 </head>
 <body>
@@ -1490,17 +1624,70 @@ function getProdutoImagem($produto) {
         <div class="products-header">
             <h1>Nossos Produtos</h1>
             <div class="filters">
-                <select class="filter-select" id="sort-select">
-                    <option value="recent">Ordenar por: Mais Recentes</option>
-                    <option value="price-low">Ordenar por: Preço (Menor para Maior)</option>
-                    <option value="price-high">Ordenar por: Preço (Maior para Menor)</option>
-                    <option value="popular">Ordenar por: Mais Vendidos</option>
-                </select>
-                <select class="filter-select" id="show-select">
-                    <option value="9">Mostrar: 9 produtos</option>
-                    <option value="12">Mostrar: 12 produtos</option>
-                    <option value="24">Mostrar: 24 produtos</option>
-                </select>
+                <!-- BARRA DE PESQUISA -->
+                <div class="search-bar">
+                    <form method="GET" action="" style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" name="pesquisa" placeholder="Pesquisar produtos..." 
+                               value="<?php echo isset($_GET['pesquisa']) ? htmlspecialchars($_GET['pesquisa']) : ''; ?>"
+                               class="search-input">
+                        <button type="submit" class="search-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.3-4.3"></path>
+                            </svg>
+                        </button>
+                        <!-- Manter outros parâmetros -->
+                        <?php if (isset($_GET['categoria'])): ?>
+                            <input type="hidden" name="categoria" value="<?php echo htmlspecialchars($_GET['categoria']); ?>">
+                        <?php endif; ?>
+                        <?php if (isset($_GET['ordenar'])): ?>
+                            <input type="hidden" name="ordenar" value="<?php echo htmlspecialchars($_GET['ordenar']); ?>">
+                        <?php endif; ?>
+                        <?php if (isset($_GET['mostrar'])): ?>
+                            <input type="hidden" name="mostrar" value="<?php echo htmlspecialchars($_GET['mostrar']); ?>">
+                        <?php endif; ?>
+                    </form>
+                </div>
+                
+                <!-- ORDENAR POR -->
+                <form method="GET" action="" id="sort-form" style="display: inline;">
+                    <select class="filter-select" name="ordenar" onchange="this.form.submit()">
+                        <option value="recent" <?php echo $ordenar_por == 'recent' ? 'selected' : ''; ?>>Ordenar por: Mais Recentes</option>
+                        <option value="oldest" <?php echo $ordenar_por == 'oldest' ? 'selected' : ''; ?>>Ordenar por: Antigo para Novo</option>
+                        <option value="price-low" <?php echo $ordenar_por == 'price-low' ? 'selected' : ''; ?>>Ordenar por: Preço (Menor para Maior)</option>
+                        <option value="price-high" <?php echo $ordenar_por == 'price-high' ? 'selected' : ''; ?>>Ordenar por: Preço (Maior para Menor)</option>
+                        <option value="popular" <?php echo $ordenar_por == 'popular' ? 'selected' : ''; ?>>Ordenar por: Mais Vendidos</option>
+                    </select>
+                    <!-- Manter outros parâmetros -->
+                    <?php if (isset($_GET['categoria'])): ?>
+                        <input type="hidden" name="categoria" value="<?php echo htmlspecialchars($_GET['categoria']); ?>">
+                    <?php endif; ?>
+                    <?php if (isset($_GET['pesquisa'])): ?>
+                        <input type="hidden" name="pesquisa" value="<?php echo htmlspecialchars($_GET['pesquisa']); ?>">
+                    <?php endif; ?>
+                    <?php if (isset($_GET['mostrar'])): ?>
+                        <input type="hidden" name="mostrar" value="<?php echo htmlspecialchars($_GET['mostrar']); ?>">
+                    <?php endif; ?>
+                </form>
+
+                <!-- MOSTRAR -->
+                <form method="GET" action="" id="show-form" style="display: inline;">
+                    <select class="filter-select" name="mostrar" onchange="this.form.submit()">
+                        <option value="9" <?php echo $produtos_por_pagina == 9 ? 'selected' : ''; ?>>Mostrar: 9 produtos</option>
+                        <option value="12" <?php echo $produtos_por_pagina == 12 ? 'selected' : ''; ?>>Mostrar: 12 produtos</option>
+                        <option value="24" <?php echo $produtos_por_pagina == 24 ? 'selected' : ''; ?>>Mostrar: 24 produtos</option>
+                    </select>
+                    <!-- Manter outros parâmetros -->
+                    <?php if (isset($_GET['categoria'])): ?>
+                        <input type="hidden" name="categoria" value="<?php echo htmlspecialchars($_GET['categoria']); ?>">
+                    <?php endif; ?>
+                    <?php if (isset($_GET['pesquisa'])): ?>
+                        <input type="hidden" name="pesquisa" value="<?php echo htmlspecialchars($_GET['pesquisa']); ?>">
+                    <?php endif; ?>
+                    <?php if (isset($_GET['ordenar'])): ?>
+                        <input type="hidden" name="ordenar" value="<?php echo htmlspecialchars($_GET['ordenar']); ?>">
+                    <?php endif; ?>
+                </form>
             </div>
         </div>
         
@@ -1511,11 +1698,25 @@ function getProdutoImagem($produto) {
             <?php if ($categoria_filtro != 'Todos'): ?>
                 | Categoria: <?php echo $categoria_filtro; ?>
             <?php endif; ?>
+            <?php if (isset($_GET['pesquisa']) && !empty($_GET['pesquisa'])): ?>
+                | Pesquisa: "<?php echo htmlspecialchars($_GET['pesquisa']); ?>"
+            <?php endif; ?>
+            <?php if ($ordenar_por != 'recent'): ?>
+                | Ordenado por: <?php 
+                    switch($ordenar_por) {
+                        case 'price-low': echo 'Preço (Menor para Maior)'; break;
+                        case 'price-high': echo 'Preço (Maior para Menor)'; break;
+                        case 'popular': echo 'Mais Vendidos'; break;
+                        case 'oldest': echo 'Antigo para Novo'; break;
+                        default: echo 'Mais Recentes';
+                    }
+                ?>
+            <?php endif; ?>
         </div>
         
         <div class="categories">
             <?php foreach($categorias as $categoria): ?>
-                <a href="?categoria=<?php echo urlencode($categoria); ?>" 
+                <a href="<?php echo buildUrl(['categoria' => $categoria, 'pagina' => 1]); ?>" 
                    class="category-btn <?php echo $categoria == $categoria_filtro ? 'active' : ''; ?>" 
                    data-category="<?php echo $categoria; ?>">
                     <?php echo $categoria; ?>
@@ -1524,40 +1725,51 @@ function getProdutoImagem($produto) {
         </div>
         
         <div class="products-grid" id="products-container">
-            <?php foreach($produtos_pagina as $produto): ?>
-            <div class="product-card" data-category="<?php echo $produto['categoria']; ?>" data-price="<?php echo $produto['preco']; ?>">
-                <?php if(!empty($produto['badge'])): ?>
-                    <div class="product-badge <?php echo $produto['badge_class']; ?>"><?php echo $produto['badge']; ?></div>
-                <?php endif; ?>
-                <div class="product-img">
-                    <img src="<?php echo getProdutoImagem($produto); ?>" alt="<?php echo $produto['nome']; ?>">
-                </div>
-                <div class="product-info">
-                    <div class="product-category"><?php echo $produto['categoria']; ?></div>
-                    <h3 class="product-name"><?php echo $produto['nome']; ?></h3>
-                    <!-- AQUI: descricao breve no card -->
-                    <p class="product-description"><?php echo $produto['descricao']; ?></p>
-                    <div class="product-price"><?php echo $produto['preco_formatado']; ?></div>
-                    <div class="product-actions">
-                        <form method="POST" style="display: inline; margin: 0;">
-                            <input type="hidden" name="produto_id" value="<?php echo $produto['id']; ?>">
-                            <input type="hidden" name="quantidade" value="1">
-                            <button type="submit" name="adicionar_carrinho" class="btn">
-                                Adicionar
-                            </button>
-                        </form>
-                        <button class="btn btn-outline" onclick="openProductModal(<?php echo $produto['id']; ?>)">Detalhes</button>
+            <?php if (count($produtos_pagina) > 0): ?>
+                <?php foreach($produtos_pagina as $produto): ?>
+                <div class="product-card" data-category="<?php echo $produto['categoria']; ?>" data-price="<?php echo $produto['preco']; ?>">
+                    <?php if(!empty($produto['badge'])): ?>
+                        <div class="product-badge <?php echo $produto['badge_class']; ?>"><?php echo $produto['badge']; ?></div>
+                    <?php endif; ?>
+                    <div class="product-img">
+                        <img src="<?php echo getProdutoImagem($produto); ?>" alt="<?php echo $produto['nome']; ?>">
+                    </div>
+                    <div class="product-info">
+                        <div class="product-category"><?php echo $produto['categoria']; ?></div>
+                        <h3 class="product-name"><?php echo $produto['nome']; ?></h3>
+                        <!-- AQUI: descricao breve no card -->
+                        <p class="product-description"><?php echo $produto['descricao']; ?></p>
+                        <div class="product-price"><?php echo $produto['preco_formatado']; ?></div>
+                        <div class="product-actions">
+                            <form method="POST" style="display: inline; margin: 0;">
+                                <input type="hidden" name="produto_id" value="<?php echo $produto['id']; ?>">
+                                <input type="hidden" name="quantidade" value="1">
+                                <button type="submit" name="adicionar_carrinho" class="btn">
+                                    Adicionar
+                                </button>
+                                </form>
+                            <button class="btn btn-outline" onclick="openProductModal(<?php echo $produto['id']; ?>)">Detalhes</button>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <?php endforeach; ?>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px;">
+                    <h3>Nenhum produto encontrado</h3>
+                    <p>Tente ajustar os filtros ou a pesquisa para encontrar o que procura.</p>
+                    <a href="<?php echo buildUrl(['categoria' => 'Todos', 'pesquisa' => '', 'pagina' => 1]); ?>" class="btn" style="margin-top: 20px;">
+                        Ver Todos os Produtos
+                    </a>
+                </div>
+            <?php endif; ?>
         </div>
         
         <!-- Paginação -->
+        <?php if ($total_paginas > 1): ?>
         <div class="pagination">
             <?php if ($pagina_atual > 1): ?>
-                <a href="?pagina=1&categoria=<?php echo urlencode($categoria_filtro); ?>">&laquo; Primeira</a>
-                <a href="?pagina=<?php echo $pagina_atual - 1; ?>&categoria=<?php echo urlencode($categoria_filtro); ?>">&lsaquo; Anterior</a>
+                <a href="<?php echo buildUrl(['pagina' => 1]); ?>">&laquo; Primeira</a>
+                <a href="<?php echo buildUrl(['pagina' => $pagina_atual - 1]); ?>">&lsaquo; Anterior</a>
             <?php else: ?>
                 <span class="disabled">&laquo; Primeira</span>
                 <span class="disabled">&lsaquo; Anterior</span>
@@ -1572,18 +1784,19 @@ function getProdutoImagem($produto) {
                 if ($i == $pagina_atual): ?>
                     <span class="current"><?php echo $i; ?></span>
                 <?php else: ?>
-                    <a href="?pagina=<?php echo $i; ?>&categoria=<?php echo urlencode($categoria_filtro); ?>"><?php echo $i; ?></a>
+                    <a href="<?php echo buildUrl(['pagina' => $i]); ?>"><?php echo $i; ?></a>
                 <?php endif;
             endfor; ?>
 
             <?php if ($pagina_atual < $total_paginas): ?>
-                <a href="?pagina=<?php echo $pagina_atual + 1; ?>&categoria=<?php echo urlencode($categoria_filtro); ?>">Próxima &rsaquo;</a>
-                <a href="?pagina=<?php echo $total_paginas; ?>&categoria=<?php echo urlencode($categoria_filtro); ?>">Última &raquo;</a>
+                <a href="<?php echo buildUrl(['pagina' => $pagina_atual + 1]); ?>">Próxima &rsaquo;</a>
+                <a href="<?php echo buildUrl(['pagina' => $total_paginas]); ?>">Última &raquo;</a>
             <?php else: ?>
                 <span class="disabled">Próxima &rsaquo;</span>
                 <span class="disabled">Última &raquo;</span>
             <?php endif; ?>
         </div>
+        <?php endif; ?>
     </div>
     
     <!-- Modal de Detalhes do Produto -->
@@ -1656,7 +1869,7 @@ function getProdutoImagem($produto) {
                                         </span>
                                     </div>
                                 </div>
-                                <a href="?remover=<?php echo $produto_id; ?>&categoria=<?php echo urlencode($categoria_filtro); ?>" class="cart-item-remove" onclick="return confirmRemoveItem(event)">
+                                <a href="<?php echo buildUrl(['remover' => $produto_id]); ?>" class="cart-item-remove" onclick="return confirmRemoveItem(event)">
                                     Remover
                                 </a>
                             </div>
@@ -1846,7 +2059,7 @@ function getProdutoImagem($produto) {
                     window.location.href = redirectUrl;
                 } else if (result.dismiss === Swal.DismissReason.cancel) {
                     // Voltar para o carrinho
-                    window.location.href = 'paginaprodutos.php?categoria=<?php echo urlencode($categoria_filtro); ?>';
+                    window.location.href = '<?php echo buildUrl([]); ?>';
                 }
             });
         });
@@ -2124,31 +2337,6 @@ function getProdutoImagem($produto) {
             document.getElementById(method).checked = true;
         }
         
-        // Função para ordenar produtos
-        function sortProducts(criteria) {
-            const container = document.getElementById('products-container');
-            const products = Array.from(container.getElementsByClassName('product-card'));
-            
-            products.sort((a, b) => {
-                switch(criteria) {
-                    case 'price-low':
-                        return parseFloat(a.getAttribute('data-price')) - parseFloat(b.getAttribute('data-price'));
-                    case 'price-high':
-                        return parseFloat(b.getAttribute('data-price')) - parseFloat(a.getAttribute('data-price'));
-                    case 'popular':
-                        // Simulação - produtos com badge "Mais Vendido" primeiro
-                        const aBadge = a.querySelector('.product-badge.bestseller') ? 1 : 0;
-                        const bBadge = b.querySelector('.product-badge.bestseller') ? 1 : 0;
-                        return bBadge - aBadge;
-                    default: // recent
-                        return 0; // Mantém ordem original
-                }
-            });
-            
-            // Reorganiza os produtos no container
-            products.forEach(product => container.appendChild(product));
-        }
-        
         // Fechar modal ao clicar fora
         window.onclick = function(event) {
             const modal = document.getElementById('productModal');
@@ -2165,6 +2353,12 @@ function getProdutoImagem($produto) {
                 closePaymentModal();
             }
         }
+
+        // Auto-submit dos formulários de ordenação e mostrar
+        document.addEventListener('DOMContentLoaded', function() {
+            // Os selects já têm onchange que submete o form
+            // Esta função é apenas para garantir o comportamento
+        });
     </script>
 </body>
 </html>

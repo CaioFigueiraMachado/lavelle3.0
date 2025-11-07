@@ -39,19 +39,22 @@ $produtos = [
  
 ];
 
-// Categorias
+// Categorias - ATUALIZADO COM LINKS CORRETOS
 $categorias = [
     [
         "nome" => "Fragrâncias Femininas",
-        "imagem" => "femininas.jpg"
+        "imagem" => "femininas.jpg",
+        "link" => "paginaprodutos.php?categoria=Feminino"
     ],
     [
         "nome" => "Fragrâncias Masculinas",
-        "imagem" => "perfumemasc.jfif"
+        "imagem" => "perfumemasc.jfif",
+        "link" => "paginaprodutos.php?categoria=Masculino"
     ],
     [
         "nome" => "Fragrâncias Compartilháveis",
-        "imagem" => "lavellegolden.jpg"
+        "imagem" => "lavellegolden.jpg",
+        "link" => "paginaprodutos.php?categoria=Compartilhável"
     ]
 ];
 
@@ -330,6 +333,15 @@ $destaques = [
             background-color: transparent;
             border: 2px solid #000;
             color: #000;
+            display: inline-block;
+            padding: 12px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s;
+            cursor: pointer;
+            font-size: 14px;
+            text-align: center;
         }
         
         .btn-outline:hover {
@@ -783,6 +795,11 @@ $destaques = [
                 font-size: 13px;
                 min-width: 90px;
             }
+            
+            .btn-outline {
+                padding: 10px 20px;
+                font-size: 13px;
+            }
         }
         
         @media (max-width: 480px) {
@@ -821,6 +838,11 @@ $destaques = [
                 padding: 7px 14px;
                 font-size: 12px;
                 min-width: 80px;
+            }
+            
+            .btn-outline {
+                padding: 8px 16px;
+                font-size: 12px;
             }
         }
     </style>
@@ -930,7 +952,8 @@ $destaques = [
                     <img src="<?php echo $categoria['imagem']; ?>" alt="<?php echo $categoria['nome']; ?>" class="category-img">
                     <div class="category-overlay">
                         <h3 class="category-name"><?php echo $categoria['nome']; ?></h3>
-                        <a href="paginaprodutos.php" class="btn">Explorar</a>
+                        <!-- LINK CORRIGIDO: usando o link específico da categoria -->
+                        <a href="<?php echo $categoria['link']; ?>" class="btn">Explorar</a>
                     </div>
                 </div>
                 <?php endforeach; ?>
