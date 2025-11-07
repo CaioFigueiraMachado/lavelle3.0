@@ -7,6 +7,8 @@ if (!isset($_SESSION['carrinho'])) {
     $_SESSION['carrinho'] = [];
 }
 
+// Verificar se é admin
+$isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'];
 // CORREÇÃO: Verificar se usuário está logado - mesma verificação da index.php
 $usuarioLogado = false;
 $usuarioNome = "";
@@ -16,15 +18,25 @@ if (isset($_SESSION['id'])) {
     $usuarioNome = $_SESSION['nome'];
 }
 
+// Verificar se há filtro de categoria
+$categoria_filtro = isset($_GET['categoria']) ? $_GET['categoria'] : 'Todos';
+
 // Buscar produtos do banco de dados
 $produtos = [];
 try {
     $database = new PDO("mysql:host=localhost;dbname=lavelle_perfumes", "root", "");
     $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
-    // ATUALIZADO: Buscar descricao_breve e descricao_longa
-    $query = "SELECT id, nome, descricao_breve, descricao_longa, preco, imagem, categoria, created_at FROM produtos ORDER BY created_at DESC";
-    $stmt = $database->prepare($query);
+    // Query modificada para filtrar por categoria
+    if ($categoria_filtro != 'Todos') {
+        $query = "SELECT id, nome, descricao_breve, descricao_longa, preco, imagem, categoria, created_at FROM produtos WHERE categoria = :categoria ORDER BY created_at DESC";
+        $stmt = $database->prepare($query);
+        $stmt->bindParam(':categoria', $categoria_filtro);
+    } else {
+        $query = "SELECT id, nome, descricao_breve, descricao_longa, preco, imagem, categoria, created_at FROM produtos ORDER BY created_at DESC";
+        $stmt = $database->prepare($query);
+    }
+    
     $stmt->execute();
     $produtos_db = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
@@ -143,7 +155,7 @@ if (isset($_GET['remover'])) {
     if (isset($_SESSION['carrinho'][$produto_id])) {
         unset($_SESSION['carrinho'][$produto_id]);
     }
-    header('Location: ' . $_SERVER['PHP_SELF']);
+    header('Location: ' . $_SERVER['PHP_SELF'] . '?categoria=' . urlencode($categoria_filtro));
     exit();
 }
 
@@ -163,7 +175,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['atualizar_carrinho']))
             $_SESSION['carrinho'][$produto_id] = $quantidade;
         }
     }
-    header('Location: ' . $_SERVER['PHP_SELF']);
+    header('Location: ' . $_SERVER['PHP_SELF'] . '?categoria=' . urlencode($categoria_filtro));
     exit();
 }
 
@@ -185,7 +197,7 @@ $produtos_por_pagina = 9;
 $total_produtos = count($produtos);
 $total_paginas = ceil($total_produtos / $produtos_por_pagina);
 
-// Obter página atual
+// Obter página atual - considerar categoria na paginação
 $pagina_atual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
 if ($pagina_atual < 1) $pagina_atual = 1;
 if ($pagina_atual > $total_paginas) $pagina_atual = $total_paginas;
@@ -218,7 +230,7 @@ if (!empty($_SESSION['carrinho'])) {
     }
 }
 
-// *** PROCESSAR FINALIZAÇÃO DA COMPRA - ATUALIZADO COM SWEETALERT ***
+// *** PROCESSAR FINALIZAÇÃO DA COMPRA - ATUALIZADO COM ETAPA DE ENDEREÇO ***
 
 // Processar finalização de compra
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
@@ -233,13 +245,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
     if (empty($_SESSION['carrinho'])) {
         // Adicionar mensagem de erro na sessão
         $_SESSION['erro_carrinho'] = "Seu carrinho está vazio! Adicione produtos antes de finalizar a compra.";
-        header('Location: ' . $_SERVER['PHP_SELF']);
+        header('Location: ' . $_SERVER['PHP_SELF'] . '?categoria=' . urlencode($categoria_filtro));
         exit();
     }
     
     $metodo_pagamento = $_POST['metodo_pagamento'];
     
-    // *** CORREÇÃO: Salvar dados completos do carrinho na sessão ***
+    // *** NOVO: Salvar método de pagamento na sessão e redirecionar para endereço ***
+    $_SESSION['metodo_pagamento'] = $metodo_pagamento;
     $_SESSION['total_compra'] = $total_carrinho;
     $_SESSION['itens_carrinho'] = $_SESSION['carrinho'];
     $_SESSION['produtos_carrinho'] = []; // Array para armazenar informações completas dos produtos
@@ -258,10 +271,49 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
         }
     }
     
-    // *** ADICIONAR: Flag para mostrar SweetAlert antes do redirecionamento ***
+    // *** NOVO: Redirecionar para página de endereço em vez de pagamento direto ***
+    header('Location: endereco_entrega.php');
+    exit();
+}
+
+// *** NOVO: Processar envio do formulário de endereço ***
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirmar_endereco'])) {
+    // Verificar se usuário está logado
+    if (!$usuarioLogado) {
+        $_SESSION['redirect_to'] = $_SERVER['PHP_SELF'];
+        header('Location: login.php');
+        exit();
+    }
+    
+    // Validar dados obrigatórios
+    $required_fields = ['cep', 'logradouro', 'numero', 'bairro', 'cidade', 'estado'];
+    foreach ($required_fields as $field) {
+        if (empty($_POST[$field])) {
+            $_SESSION['erro_endereco'] = "Por favor, preencha todos os campos obrigatórios.";
+            header('Location: ' . $_SERVER['PHP_SELF'] . '?categoria=' . urlencode($categoria_filtro));
+            exit();
+        }
+    }
+    
+    // Coletar dados do endereço
+    $endereco = [
+        'cep' => $_POST['cep'],
+        'logradouro' => $_POST['logradouro'],
+        'numero' => $_POST['numero'],
+        'complemento' => $_POST['complemento'] ?? '',
+        'bairro' => $_POST['bairro'],
+        'cidade' => $_POST['cidade'],
+        'estado' => $_POST['estado'],
+        'ponto_referencia' => $_POST['ponto_referencia'] ?? ''
+    ];
+    
+    // Salvar endereço na sessão
+    $_SESSION['endereco_entrega'] = $endereco;
+    
+    // Configurar redirecionamento para o método de pagamento escolhido
+    $metodo_pagamento = $_SESSION['metodo_pagamento'];
     $_SESSION['show_payment_redirect'] = true;
     $_SESSION['payment_method'] = $metodo_pagamento;
-    $_SESSION['redirect_url'] = ''; // Definir a URL de redirecionamento
     
     // Definir URL de redirecionamento baseada no método de pagamento
     switch($metodo_pagamento) {
@@ -275,12 +327,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['finalizar_compra'])) {
             $_SESSION['redirect_url'] = 'pagamento_boleto.php';
             break;
         default:
-            $_SESSION['redirect_url'] = $_SERVER['PHP_SELF'];
+            $_SESSION['redirect_url'] = 'paginaprodutos.php';
             break;
     }
     
-    // Redirecionar de volta para a mesma página para mostrar o SweetAlert
-    header('Location: ' . $_SERVER['PHP_SELF'] . '?show_redirect=true');
+    // Redirecionar de volta para mostrar o SweetAlert de confirmação
+    header('Location: ' . $_SERVER['PHP_SELF'] . '?show_redirect=true&categoria=' . urlencode($categoria_filtro));
     exit();
 }
 
@@ -301,6 +353,18 @@ function getProdutoImagem($produto) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Produtos - LAVELLE Perfumes</title>
     <style>
+        /* Link ADM - NOVO ESTILO */
+        .user-menu a.admin-link {
+            background-color: #8b7355;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .user-menu a.admin-link:hover {
+            background-color: #000;
+            color: white;
+        }
+        
         * {
             margin: 0;
             padding: 0;
@@ -463,6 +527,9 @@ function getProdutoImagem($produto) {
             cursor: pointer;
             transition: all 0.3s;
             font-size: 14px;
+            text-decoration: none;
+            color: #333;
+            display: inline-block;
         }
         
         .category-btn.active, .category-btn:hover {
@@ -1378,8 +1445,13 @@ function getProdutoImagem($produto) {
                         <?php if ($usuarioLogado): ?>
                             <div class="user-menu">
                                 <span style="color: #8b7355; font-weight: 500;">Olá, <?php echo htmlspecialchars($usuarioNome); ?></span>
-                                <li><a href="perfil.php" class="profile-link">MEU PERFIL</a></li>
-                                <li>
+                              
+                                
+                                <!-- LINK ADM - APENAS PARA ADMINISTRADOR -->
+                                <?php if ($isAdmin): ?>
+                                    <li><a href="admin/dashboard.php" class="admin-link">ADM</a></li>
+                                <?php endif; ?>
+                                 <li>
                                     <button class="cart-icon" onclick="openCartModal()">
                                         CARRINHO
                                         <?php if (count($_SESSION['carrinho']) > 0): ?>
@@ -1387,6 +1459,7 @@ function getProdutoImagem($produto) {
                                         <?php endif; ?>
                                     </button>
                                 </li>
+                                
                             </div>
                         <?php else: ?>
                             <div class="user-menu">
@@ -1435,13 +1508,18 @@ function getProdutoImagem($produto) {
         <div class="page-info">
             Página <?php echo $pagina_atual; ?> de <?php echo $total_paginas; ?> 
             | Mostrando <?php echo count($produtos_pagina); ?> de <?php echo $total_produtos; ?> produtos
+            <?php if ($categoria_filtro != 'Todos'): ?>
+                | Categoria: <?php echo $categoria_filtro; ?>
+            <?php endif; ?>
         </div>
         
         <div class="categories">
             <?php foreach($categorias as $categoria): ?>
-                <button class="category-btn <?php echo $categoria == 'Todos' ? 'active' : ''; ?>" data-category="<?php echo $categoria; ?>">
+                <a href="?categoria=<?php echo urlencode($categoria); ?>" 
+                   class="category-btn <?php echo $categoria == $categoria_filtro ? 'active' : ''; ?>" 
+                   data-category="<?php echo $categoria; ?>">
                     <?php echo $categoria; ?>
-                </button>
+                </a>
             <?php endforeach; ?>
         </div>
         
@@ -1478,10 +1556,11 @@ function getProdutoImagem($produto) {
         <!-- Paginação -->
         <div class="pagination">
             <?php if ($pagina_atual > 1): ?>
-                <a href="?pagina=1">&laquo; Primeira</a>
-                <a href="?pagina=<?php echo $pagina_atual - 1; ?>">&lsaquo; Anterior</a>
+                <a href="?pagina=1&categoria=<?php echo urlencode($categoria_filtro); ?>">&laquo; Primeira</a>
+                <a href="?pagina=<?php echo $pagina_atual - 1; ?>&categoria=<?php echo urlencode($categoria_filtro); ?>">&lsaquo; Anterior</a>
             <?php else: ?>
-             
+                <span class="disabled">&laquo; Primeira</span>
+                <span class="disabled">&lsaquo; Anterior</span>
             <?php endif; ?>
 
             <?php
@@ -1493,12 +1572,13 @@ function getProdutoImagem($produto) {
                 if ($i == $pagina_atual): ?>
                     <span class="current"><?php echo $i; ?></span>
                 <?php else: ?>
-                    <a href="?pagina=<?php echo $i; ?>"><?php echo $i; ?></a>
+                    <a href="?pagina=<?php echo $i; ?>&categoria=<?php echo urlencode($categoria_filtro); ?>"><?php echo $i; ?></a>
                 <?php endif;
             endfor; ?>
 
             <?php if ($pagina_atual < $total_paginas): ?>
-              
+                <a href="?pagina=<?php echo $pagina_atual + 1; ?>&categoria=<?php echo urlencode($categoria_filtro); ?>">Próxima &rsaquo;</a>
+                <a href="?pagina=<?php echo $total_paginas; ?>&categoria=<?php echo urlencode($categoria_filtro); ?>">Última &raquo;</a>
             <?php else: ?>
                 <span class="disabled">Próxima &rsaquo;</span>
                 <span class="disabled">Última &raquo;</span>
@@ -1576,7 +1656,7 @@ function getProdutoImagem($produto) {
                                         </span>
                                     </div>
                                 </div>
-                                <a href="?remover=<?php echo $produto_id; ?>" class="cart-item-remove" onclick="return confirmRemoveItem(event)">
+                                <a href="?remover=<?php echo $produto_id; ?>&categoria=<?php echo urlencode($categoria_filtro); ?>" class="cart-item-remove" onclick="return confirmRemoveItem(event)">
                                     Remover
                                 </a>
                             </div>
@@ -1696,50 +1776,77 @@ function getProdutoImagem($produto) {
             
             let methodName = '';
             let methodDesc = '';
+            let paymentIcon = 'success';
             
             switch(paymentMethod) {
                 case 'credit':
                     methodName = 'Cartão de Crédito';
                     methodDesc = 'Parcelamento em até 12x';
+                    paymentIcon = '';
                     break;
                 case 'pix':
                     methodName = 'PIX';
                     methodDesc = '15% de desconto';
+                    paymentIcon = '';
                     break;
                 case 'boleto':
                     methodName = 'Boleto Bancário';
                     methodDesc = 'Pagamento em 1x';
+                    paymentIcon = '';
                     break;
             }
             
             Swal.fire({
-                title: 'Redirecionando para Pagamento',
+                title: 'Endereço Confirmado!',
                 html: `
-                    <div style="text-align: left;">
-                        <p><strong>Método selecionado:</strong> ${methodName}</p>
-                        <p><strong>Descrição:</strong> ${methodDesc}</p>
-                        <p><strong>Valor total:</strong> R$ ${totalCompra}</p>
-                        <p style="margin-top: 15px; font-style: italic;">Você será redirecionado em instantes...</p>
+                    <div style="text-align: center;">
+                        <div style="font-size: 48px; margin-bottom: 20px;">${paymentIcon}</div>
+                        <p style="font-size: 18px; margin-bottom: 15px;"><strong>Endereço salvo com sucesso!</strong></p>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 15px 0;">
+                            <p style="margin: 5px 0;"><strong>Método de pagamento:</strong> ${methodName}</p>
+                            <p style="margin: 5px 0;"><strong>Descrição:</strong> ${methodDesc}</p>
+                            <p style="margin: 5px 0;"><strong>Valor total:</strong> R$ ${totalCompra}</p>
+                        </div>
+                        <p style="color: #666; font-style: italic; margin-top: 20px;">
+                            Redirecionando para pagamento em <span id="countdown">5</span> segundos...
+                        </p>
                     </div>
                 `,
-                icon: 'info',
+                icon: 'success',
                 showCancelButton: true,
-                confirmButtonText: 'Continuar',
-                cancelButtonText: 'Cancelar',
+                confirmButtonText: 'Ir para Pagamento Agora',
+                cancelButtonText: 'Voltar ao Carrinho',
                 confirmButtonColor: '#8b7355',
                 cancelButtonColor: '#6c757d',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
                 timer: 5000,
                 timerProgressBar: true,
                 didOpen: () => {
+                    // Contador regressivo
+                    const timer = Swal.getTimerLeft();
+                    let countdown = 5;
+                    const countdownElement = document.getElementById('countdown');
+                    
+                    const countdownInterval = setInterval(() => {
+                        countdown--;
+                        if (countdownElement) {
+                            countdownElement.textContent = countdown;
+                        }
+                        if (countdown <= 0) {
+                            clearInterval(countdownInterval);
+                        }
+                    }, 1000);
+                    
                     Swal.showLoading();
                 }
             }).then((result) => {
-                if (result.isConfirmed) {
+                if (result.isConfirmed || result.dismiss === Swal.DismissReason.timer) {
+                    // Redirecionar para a página de pagamento
                     window.location.href = redirectUrl;
                 } else if (result.dismiss === Swal.DismissReason.cancel) {
-                    window.location.href = '<?php echo $_SERVER["PHP_SELF"]; ?>';
-                } else if (result.dismiss === Swal.DismissReason.timer) {
-                    window.location.href = redirectUrl;
+                    // Voltar para o carrinho
+                    window.location.href = 'paginaprodutos.php?categoria=<?php echo urlencode($categoria_filtro); ?>';
                 }
             });
         });
@@ -1921,43 +2028,6 @@ function getProdutoImagem($produto) {
             
             return false;
         }
-        
-        // Filtro por categoria
-        document.addEventListener('DOMContentLoaded', function() {
-            const categoryButtons = document.querySelectorAll('.category-btn');
-            const productCards = document.querySelectorAll('.product-card');
-            
-            categoryButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    // Remove active class de todos os botões
-                    categoryButtons.forEach(btn => btn.classList.remove('active'));
-                    
-                    // Adiciona active class ao botão clicado
-                    this.classList.add('active');
-                    
-                    const category = this.getAttribute('data-category');
-                    
-                    // Filtra os produtos
-                    productCards.forEach(card => {
-                        if (category === 'Todos' || card.getAttribute('data-category') === category) {
-                            card.style.display = 'block';
-                        } else {
-                            card.style.display = 'none';
-                        }
-                    });
-                });
-            });
-            
-            // Ordenação de produtos
-            document.getElementById('sort-select').addEventListener('change', function() {
-                sortProducts(this.value);
-            });
-            
-            // Atualizar total quando o modal do carrinho abrir
-            document.querySelector('.cart-icon').addEventListener('click', function() {
-                setTimeout(updateCartTotal, 100);
-            });
-        });
         
         // Função para abrir modal de detalhes do produto
         function openProductModal(productId) {

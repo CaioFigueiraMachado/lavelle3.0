@@ -97,13 +97,7 @@ include 'includes/sidebar.php';
             </div>
         </div>
         
-        <div class="stat-card">
-            
-            <div class="stat-info">
-                <div class="stat-number">245</div>
-                <div class="stat-label">Pedidos Concluídos</div>
-            </div>
-        </div>
+       
     </div>
 
     <div class="content-grid">

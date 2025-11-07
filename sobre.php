@@ -727,12 +727,14 @@ if (isset($_SESSION['usuario_id'])) {
                         <li><a href="paginaprodutos.php">PRODUTOS</a></li>
                         <li><a href="sobre.php" style="color: #8b7355;">SOBRE</a></li>
                         <li><a href="contato.php">CONTATO</a></li>
+               
                         
                         <!-- Menu do Usuário -->
                         <?php if ($usuarioLogado): ?>
                             <div class="user-menu">
                                 <li><a href="perfil.php" class="profile-link">MEU PERFIL</a></li>
                                 <li><a href="logout.php">SAIR</a></li>
+                                
                             </div>
                         <?php else: ?>
                             <div class="user-menu">

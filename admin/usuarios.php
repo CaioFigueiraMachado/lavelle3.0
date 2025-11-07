@@ -118,8 +118,7 @@ include 'includes/sidebar.php';
                             <th>ID</th>
                             <th>Nome</th>
                             <th>Email</th>
-                            <th>Telefone</th>
-                            <th>Cidade</th>
+                          
                             <th>Data Cadastro</th>
                             <th>Ações</th>
                         </tr>
@@ -130,8 +129,7 @@ include 'includes/sidebar.php';
                             <td><?php echo $usuario['id']; ?></td>
                             <td><?php echo htmlspecialchars($usuario['nome']); ?></td>
                             <td><?php echo htmlspecialchars($usuario['email']); ?></td>
-                            <td><?php echo htmlspecialchars($usuario['telefone'] ?? '-'); ?></td>
-                            <td><?php echo htmlspecialchars($usuario['cidade'] ?? '-'); ?></td>
+                            
                             <td>
                                 <?php 
                                 if(isset($usuario['created_at'])) {

@@ -459,7 +459,7 @@ $vencimento = date('d/m/Y', strtotime('+2 weekdays'));
     </div>
 
     <div class="footer">
-        LAVELLE &copy; 2023 - Todos os direitos reservados
+        LAVELLE &copy; 2025 - Todos os direitos reservados
     </div>
 
     <script>

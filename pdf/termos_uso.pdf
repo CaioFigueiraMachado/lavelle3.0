@@ -1,0 +1,39 @@
+
+        <html>
+        <head>
+            <title>Termos de Uso</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+                h1 { color: #333; border-bottom: 2px solid #8b7355; padding-bottom: 10px; }
+                .header { text-align: center; margin-bottom: 30px; }
+                .content { margin: 20px 0; }
+                .footer { margin-top: 50px; font-size: 12px; color: #666; text-align: center; }
+            </style>
+        </head>
+        <body>
+            <div class='header'>
+                <h1>LAVELLE PERFUMES</h1>
+                <h2>Termos de Uso</h2>
+            </div>
+            <div class='content'>
+                
+<h3>1. Aceitação dos Termos</h3>
+<p>Ao acessar e usar este site, você concorda em cumprir estes termos de serviço.</p>
+
+<h3>2. Uso do Site</h3>
+<p>Você concorda em usar o site apenas para fins legais e de maneira que não infrinja os direitos de terceiros.</p>
+
+<h3>3. Propriedade Intelectual</h3>
+<p>Todo o conteúdo do site, incluindo textos, imagens e logotipos, é propriedade da LAVELLE Perfumes.</p>
+
+<h3>4. Limitação de Responsabilidade</h3>
+<p>Não nos responsabilizamos por danos diretos ou indiretos resultantes do uso do site.</p>
+
+            </div>
+            <div class='footer'>
+                <p>Documento gerado em: 07/11/2025</p>
+                <p>LAVELLE Perfumes - Todos os direitos reservados</p>
+            </div>
+        </body>
+        </html>
+        

@@ -1,0 +1,45 @@
+
+        <html>
+        <head>
+            <title>Política de Trocas e Devoluções</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+                h1 { color: #333; border-bottom: 2px solid #8b7355; padding-bottom: 10px; }
+                .header { text-align: center; margin-bottom: 30px; }
+                .content { margin: 20px 0; }
+                .footer { margin-top: 50px; font-size: 12px; color: #666; text-align: center; }
+            </style>
+        </head>
+        <body>
+            <div class='header'>
+                <h1>LAVELLE PERFUMES</h1>
+                <h2>Política de Trocas e Devoluções</h2>
+            </div>
+            <div class='content'>
+                
+<h3>1. Prazo para Troca/Devolução</h3>
+<p>Você tem 30 dias corridos a partir da data de recebimento do produto para solicitar troca ou devolução.</p>
+
+<h3>2. Condições para Troca</h3>
+<p>O produto deve estar:</p>
+<ul>
+    <li>Na embalagem original</li>
+    <li>Com todas as etiquetas</li>
+    <li>Sem indícios de uso</li>
+    <li>Acompanhado da nota fiscal</li>
+</ul>
+
+<h3>3. Processo de Troca</h3>
+<p>Entre em contato conosco pelo e-mail contatolavelle@gmail.com para iniciar o processo de troca.</p>
+
+<h3>4. Reembolsos</h3>
+<p>Os reembolsos serão processados em até 10 dias úteis após a recepção do produto em nosso centro de distribuição.</p>
+
+            </div>
+            <div class='footer'>
+                <p>Documento gerado em: 07/11/2025</p>
+                <p>LAVELLE Perfumes - Todos os direitos reservados</p>
+            </div>
+        </body>
+        </html>
+        
