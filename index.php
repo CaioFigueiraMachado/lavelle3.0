@@ -24,12 +24,12 @@ $produtos = [
     [
         "nome" => "Lavelle Aureum",
         "preco" => "R$ 299,90",
-        "imagem" => "lavelleaureum.jpg"
+        "imagem" => "img/Lavelle Aureum.png"
     ],
     [
         "nome" => "Lavelle Horizon",
         "preco" => "R$ 349,90",
-        "imagem" => "horizon.png"
+        "imagem" => "img/Lavelle Horizon.png"
     ],
     [
         "nome" => "Lavelle Rose Sublime",

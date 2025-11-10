@@ -106,6 +106,62 @@ $nomes_pagamento = [
 ];
 $metodo_pagamento_nome = $nomes_pagamento[$metodo_pagamento] ?? 'Método de Pagamento';
 ?>
+<?php
+// No final do processamento de compra, após confirmar endereço
+
+
+// ... seu código existente ...
+
+// Salvar pedido no banco de dados
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirmar_endereco'])) {
+    // ... validações existentes ...
+    
+    try {
+        $database = new PDO("mysql:host=localhost;dbname=lavelle_perfumes", "root", "");
+        $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        
+        // Inserir pedido
+        $query = "INSERT INTO pedidos (usuario_id, total, status, metodo_pagamento, endereco_entrega, created_at) 
+                  VALUES (:usuario_id, :total, :status, :metodo_pagamento, :endereco_entrega, NOW())";
+        
+        $stmt = $database->prepare($query);
+        $stmt->execute([
+            ':usuario_id' => $_SESSION['id'],
+            ':total' => $_SESSION['total_compra'],
+            ':status' => 'processando',
+            ':metodo_pagamento' => $_SESSION['metodo_pagamento'],
+            ':endereco_entrega' => json_encode($endereco)
+        ]);
+        
+        $pedido_id = $database->lastInsertId();
+        
+        // Salvar itens do pedido (se tiver tabela pedido_itens)
+        if (isset($_SESSION['produtos_carrinho'])) {
+            foreach ($_SESSION['produtos_carrinho'] as $produto_id => $item) {
+                $query_item = "INSERT INTO pedido_itens (pedido_id, produto_id, quantidade, preco_unitario) 
+                              VALUES (:pedido_id, :produto_id, :quantidade, :preco_unitario)";
+                $stmt_item = $database->prepare($query_item);
+                $stmt_item->execute([
+                    ':pedido_id' => $pedido_id,
+                    ':produto_id' => $produto_id,
+                    ':quantidade' => $item['quantidade'],
+                    ':preco_unitario' => $item['produto']['preco']
+                ]);
+            }
+        }
+        
+        // Limpar carrinho após finalizar pedido
+        unset($_SESSION['carrinho']);
+        unset($_SESSION['produtos_carrinho']);
+        
+    } catch(PDOException $e) {
+        // Log do erro, mas continuar o processo
+        error_log("Erro ao salvar pedido: " . $e->getMessage());
+    }
+    
+    // ... resto do código de redirecionamento ...
+}
+?>
 
 <!DOCTYPE html>
 <html lang="pt-BR">

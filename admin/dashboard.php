@@ -53,7 +53,7 @@ include 'includes/sidebar.php';
 <div class="main-content">
     <div class="page-header">
         <h1>Dashboard Administrativo</h1>
-        <p>Bem-vindo ao painel de controle da LAVELLE Perfumes</p>
+        <p>Bem-vindo ao painel de controle da LAVELLE PERFUMES</p>
         <?php if($total_produtos === 0): ?>
             <div style="margin-top: 10px;">
                 <a href="criar_tabelas.php" class="btn-primary" style="font-size: 0.8rem; background: #dc3545;">

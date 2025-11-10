@@ -55,7 +55,7 @@ try {
     }
     
     // Construir query base
-    $query = "SELECT id, nome, descricao_breve, descricao_longa, preco, imagem, categoria, created_at FROM produtos";
+    $query = "SELECT id, nome, descricao_breve, descricao_longa, preco, imagem, categoria, notas_saida, notas_coracao, notas_fundo, created_at FROM produtos";
     
     if (!empty($where_conditions)) {
         $query .= " WHERE " . implode(" AND ", $where_conditions);
@@ -99,6 +99,27 @@ try {
     
     // Converter para o formato esperado pelo código existente
     foreach($produtos_db as $produto_db) {
+        // Construir array de notas a partir dos campos individuais
+        $notas = [];
+        if (!empty($produto_db['notas_saida'])) {
+            $notas[] = "Notas de Saída: " . $produto_db['notas_saida'];
+        }
+        if (!empty($produto_db['notas_coracao'])) {
+            $notas[] = "Notas de Coração: " . $produto_db['notas_coracao'];
+        }
+        if (!empty($produto_db['notas_fundo'])) {
+            $notas[] = "Notas de Fundo: " . $produto_db['notas_fundo'];
+        }
+        
+        // Se não houver notas no banco, usar as padrão
+        if (empty($notas)) {
+            $notas = [
+                "Notas de Saída: Bergamota, Laranja",
+                "Notas de Coração: Jasmim, Rosa, Íris", 
+                "Notas de Fundo: Baunilha, Âmbar, Musk"
+            ];
+        }
+        
         $produtos[] = [
             "id" => $produto_db['id'],
             "nome" => $produto_db['nome'],
@@ -108,11 +129,10 @@ try {
             // ATUALIZADO: Usar descricao_breve para o card e descricao_longa para o modal
             "descricao" => $produto_db['descricao_breve'] ?? $produto_db['descricao_longa'] ?? 'Descrição não disponível',
             "descricao_longa" => $produto_db['descricao_longa'] ?? $produto_db['descricao_breve'] ?? 'Descrição detalhada não disponível',
-            "notas" => [
-                "Notas de Saída: Bergamota, Laranja",
-                "Notas de Coração: Jasmim, Rosa, Íris", 
-                "Notas de Fundo: Baunilha, Âmbar, Musk"
-            ],
+            "notas" => $notas,
+            "notas_saida" => $produto_db['notas_saida'] ?? '',
+            "notas_coracao" => $produto_db['notas_coracao'] ?? '',
+            "notas_fundo" => $produto_db['notas_fundo'] ?? '',
             "badge" => "",
             "badge_class" => "",    
             "imagem" => $produto_db['imagem'],
@@ -136,6 +156,9 @@ try {
                 "Notas de Coração: Jasmim, Rosa, Íris",
                 "Notas de Fundo: Baunilha, Âmbar, Musk"
             ],
+            "notas_saida" => "Bergamota, Laranja",
+            "notas_coracao" => "Jasmim, Rosa, Íris",
+            "notas_fundo" => "Baunilha, Âmbar, Musk",
             "badge" => "Novo",
             "badge_class" => "new",
             "imagem" => "lavelleaureum.jpg",
@@ -154,6 +177,9 @@ try {
                 "Notas de Coração: Cedro, Sândalo",
                 "Notas de Fundo: Âmbar, Couro, Musk"
             ],
+            "notas_saida" => "Cardamomo, Pimenta Preta",
+            "notas_coracao" => "Cedro, Sândalo",
+            "notas_fundo" => "Âmbar, Couro, Musk",
             "badge" => "",
             "badge_class" => "",
             "imagem" => "intense.png",
@@ -172,6 +198,9 @@ try {
                 "Notas de Coração: Neroli, Lírio do Vale",
                 "Notas de Fundo: Musk Branco, Almíscar"
             ],
+            "notas_saida" => "Limão Siciliano, Bergamota",
+            "notas_coracao" => "Neroli, Lírio do Vale",
+            "notas_fundo" => "Musk Branco, Almíscar",
             "badge" => "Mais Vendido",
             "badge_class" => "bestseller",
             "imagem" => "Lavelle Rose Sublime.jpg",
@@ -769,6 +798,38 @@ function buildUrl($params = []) {
             line-height: 1.5;
             height: 42px;
             overflow: hidden;
+        }
+        
+        /* NOVO: Estilo para as notas do produto */
+        .product-notes {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 3px solid #8b7355;
+            margin-bottom: 15px;
+        }
+        
+        .product-notes h4 {
+            font-size: 12px;
+            color: #8b7355;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        .product-notes-list {
+            font-size: 11px;
+            color: #666;
+            line-height: 1.4;
+        }
+        
+        .product-notes-list div {
+            margin-bottom: 3px;
+        }
+        
+        .product-notes-list strong {
+            color: #333;
         }
         
         .product-price {
@@ -1739,6 +1800,12 @@ function buildUrl($params = []) {
                         <h3 class="product-name"><?php echo $produto['nome']; ?></h3>
                         <!-- AQUI: descricao breve no card -->
                         <p class="product-description"><?php echo $produto['descricao']; ?></p>
+                        
+                        <!-- NOVO: Notas do produto no card -->
+                        <?php if (!empty($produto['notas_saida']) || !empty($produto['notas_coracao']) || !empty($produto['notas_fundo'])): ?>
+                        
+                        <?php endif; ?>
+                        
                         <div class="product-price"><?php echo $produto['preco_formatado']; ?></div>
                         <div class="product-actions">
                             <form method="POST" style="display: inline; margin: 0;">

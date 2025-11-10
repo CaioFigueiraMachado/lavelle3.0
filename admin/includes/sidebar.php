@@ -22,10 +22,12 @@
                             Gerenciar Produtos
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a href="../index.php">
+                     
+                
+                       <li class="nav-item">
+                        <a href="../paginaprodutos.php">
                             <span class="nav-icon"></span>
-                            Voltar ao Site
+                            Ver Loja
                         </a>
                     </li>
                     <li class="nav-item logout-item">

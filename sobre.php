@@ -845,28 +845,28 @@ if (isset($_SESSION['usuario_id'])) {
             <div class="team-grid">
                 <div class="team-member fade-in">
                     <div class="member-photo">
-                        <img src="caii.png" alt="Caio Machado">
+                        <img src="img/caii.png" alt="Caio Machado">
                     </div>
                     <h3>Caio Machado</h3>
                     <div class="role">DEV TEAM</div>
                 </div>
                 <div class="team-member fade-in">
                     <div class="member-photo">
-                        <img src="lucas (1).png" alt="Lucas Henrique">
+                        <img src="img/lucas (1).png" alt="Lucas Henrique">
                     </div>
                     <h3>Lucas Henrique</h3>
                     <div class="role">DEV TEAM</div>
                 </div>
                 <div class="team-member fade-in">
                     <div class="member-photo">
-                        <img src="sophiaruiz.png" alt="Sophia Ruiz">
+                        <img src="img/sophiaruiz.png" alt="Sophia Ruiz">
                     </div>
                     <h3>Sophia Ruiz</h3>
                     <div class="role">SCRUM MASTER</div>
                 </div>
                 <div class="team-member fade-in">
                     <div class="member-photo">
-                        <img src="ana.png" alt="Ana Victoria">
+                        <img src="img/ana.png" alt="Ana Victoria">
                     </div>
                     <h3>Ana Victória</h3>
                     <div class="role">DESIGNER DE PRODUTOS</div>

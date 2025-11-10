@@ -17,6 +17,8 @@ if (isset($_SESSION['usuario_id'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contato - LAVELLE Perfumes</title>
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <style>
         /* Reset e estilos gerais */
         * {
@@ -852,8 +854,8 @@ if (isset($_SESSION['usuario_id'])) {
         <div class="container">
             <h2>Junte-se ao Nosso Mundo de Fragrâncias</h2>
             <p>Receba novidades, lançamentos exclusivos e ofertas especiais diretamente no seu e-mail.</p>
-            <form class="newsletter-form">
-                <input type="email" class="newsletter-input" placeholder="Seu melhor e-mail" required>
+            <form class="newsletter-form" id="newsletterForm">
+                <input type="email" class="newsletter-input" id="newsletterEmail" placeholder="Seu melhor e-mail" required>
                 <button type="submit" class="newsletter-btn">Assinar</button>
             </form>
         </div>
@@ -901,15 +903,59 @@ if (isset($_SESSION['usuario_id'])) {
         </div>
     </footer>
 
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
 
-         // Newsletter form
-        document.querySelector('.newsletter-form').addEventListener('submit', function(e) {
+         // Newsletter form com SweetAlert2
+        document.getElementById('newsletterForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            const email = this.querySelector('.newsletter-input').value;
-            alert('Obrigado por se inscrever com o e-mail: ' + email);
-            this.reset();
+            const email = document.getElementById('newsletterEmail').value;
+            
+            // Validação básica de email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                Swal.fire({
+                    title: 'E-mail inválido!',
+                    text: 'Por favor, insira um endereço de e-mail válido.',
+                    icon: 'warning',
+                    confirmButtonColor: '#8b7355'
+                });
+                return;
+            }
+            
+            // Mostra SweetAlert2 de sucesso
+            Swal.fire({
+                title: 'Bem-vindo(a) ao Mundo Lavelle!',
+                html: `
+                    <div style="text-align: center;">
+                        <div style="font-size: 48px; margin-bottom: 20px;"></div>
+                        <p style="font-size: 18px; margin-bottom: 15px;"><strong>Inscrição realizada com sucesso!</strong></p>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 15px 0;">
+                            <p style="margin: 5px 0;"><strong>E-mail cadastrado:</strong> ${email}</p>
+                            <p style="margin: 5px 0; color: #666;">Você receberá nossas novidades em primeira mão!</p>
+                        </div>
+                        <p style="color: #8b7355; font-style: italic; margin-top: 20px;">
+                            Prepare-se para descobrir fragrâncias exclusivas!
+                        </p>
+                    </div>
+                `,
+                icon: 'success',
+                confirmButtonText: 'Continuar Navegando',
+                confirmButtonColor: '#8b7355',
+                width: 500,
+                customClass: {
+                    popup: 'newsletter-popup'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Limpa o formulário
+                    this.reset();
+                }
+            });
         });
+
         // Animação de scroll
         document.addEventListener('DOMContentLoaded', function() {
             const observer = new IntersectionObserver((entries) => {
@@ -1008,8 +1054,18 @@ if (isset($_SESSION['usuario_id'])) {
                 contactForm.addEventListener('submit', function(e) {
                     e.preventDefault();
                     if (validateForm()) {
-                        showNotification('Mensagem enviada com sucesso! Responderemos em breve.');
-                        this.reset();
+                        // Usando SweetAlert2 para o formulário de contato também
+                        Swal.fire({
+                            title: 'Mensagem Enviada!',
+                            text: 'Obrigado pelo seu contato. Responderemos em breve.',
+                            icon: 'success',
+                            confirmButtonColor: '#8b7355',
+                            confirmButtonText: 'OK'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                this.reset();
+                            }
+                        });
                     }
                 });
             }
