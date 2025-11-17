@@ -2,9 +2,7 @@
 session_start();
 include 'conexao.php';
 
-// Verificar se usuário está logado - CORRIGIDO
-$usuarioLogado = false;
-$usuarioNome = "";
+
 
 if (isset($_SESSION['id'])) { // Mudado de 'usuario_id' para 'id'
     $usuarioLogado = true;
@@ -34,7 +32,7 @@ $produtos = [
     [
         "nome" => "Lavelle Rose Sublime",
         "preco" => "R$ 279,90",
-        "imagem" => "Lavelle Rose Sublime.jpg"
+        "imagem" => "img/Lavelle Rose Sublime.jpg"
     ],
  
 ];
@@ -43,17 +41,17 @@ $produtos = [
 $categorias = [
     [
         "nome" => "Fragrâncias Femininas",
-        "imagem" => "femininas.jpg",
+        "imagem" => "img/femininas.jpg",
         "link" => "paginaprodutos.php?categoria=Feminino"
     ],
     [
         "nome" => "Fragrâncias Masculinas",
-        "imagem" => "perfumemasc.jfif",
+        "imagem" => "img/perfumemasc.jfif",
         "link" => "paginaprodutos.php?categoria=Masculino"
     ],
     [
         "nome" => "Fragrâncias Compartilháveis",
-        "imagem" => "lavellegolden.jpg",
+        "imagem" => "img/lavellegolden.jpg",
         "link" => "paginaprodutos.php?categoria=Compartilhável"
     ]
 ];
@@ -262,7 +260,7 @@ $destaques = [
         
         /* Hero Section */
         .hero {
-            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('lavellehome.png') no-repeat center center/cover;
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('img/lavellehome.png') no-repeat center center/cover;
             background-size: cover;
             background-position: center;
             height: 80vh;
@@ -853,41 +851,11 @@ $destaques = [
         <h1>O perfume certo transforma a presença em memória.</h1>
     </div>
     
+     
     <header>
-        <div class="container">
-            <div class="header-top">
-                <div class="logo"><?php echo $empresa; ?></div>
-                <nav>
-                    <ul>
-                        <li><a href="index.php">INÍCIO</a></li>
-                        <li><a href="paginaprodutos.php">PRODUTOS</a></li>
-                       
-                        <li><a href="sobre.php">SOBRE</a></li>
-                        <li><a href="contato.php">CONTATO</a></li>
-                        
-                        <!-- Menu do Usuário - CORRIGIDO -->
-                        <?php if ($usuarioLogado): ?>
-                            <div class="user-menu">
-                                <span style="color: #8b7355; font-weight: 500;">Olá, <?php echo htmlspecialchars($usuarioNome); ?></span>
-                                <li><a href="perfil.php" class="profile-link">MEU PERFIL</a></li>
-                                
-                                <!-- LINK ADM - APENAS PARA ADMINISTRADOR -->
-                                <?php if ($isAdmin): ?>
-                                    <li><a href="admin/dashboard.php" class="admin-link">ADM</a></li>
-                                <?php endif; ?>
-                                
-                                <li><a href="logout.php">SAIR</a></li>
-                            </div>
-                        <?php else: ?>
-                            <div class="user-menu">
-                                <li><a href="login.php">ENTRAR</a></li>
-                              
-                            </div>
-                        <?php endif; ?>
-                    </ul>
-                </nav>
-            </div>
-        </div>
+        <?php
+       include 'header.php';
+       ?>
     </header>
 
     <!-- Seção de Boas-vindas para usuários logados -->
@@ -907,7 +875,7 @@ $destaques = [
         <div class="container">
             <div class="video-container">
                 <video class="video-banner" autoplay muted loop>
-                    <source src="vd.mp4" type="video/mp4">
+                    <source src="Lavelle Perfumes.mp4" type="video/mp4">
                     Seu navegador não suporta o elemento de vídeo.
                 </video>
                 <div class="video-overlay">
@@ -981,46 +949,9 @@ $destaques = [
     
     
   <footer>
-    <div class="container">
-        <div class="footer-content">
-            <div class="footer-column">
-                <h3>CONTATO</h3>
-                <div class="contact-info">
-                    <p>E-mail: contatolavelle@gmail.com</p>
-                    <p>Endereço: Rua das Fragrâncias, 123 - Jardim Perfumado</p>
-                </div>
-            </div>
-            <div class="footer-column">
-                <h3>REDES SOCIAIS</h3>
-                <div class="social-links">
-                    <a href="#">Facebook</a><br>
-                    <a href="#">Instagram</a><br>
-                    <a href="#">Twitter</a>
-                </div>
-            </div>
-            <div class="footer-column">
-                <h3>POLÍTICAS</h3>
-                <ul>
-                    <li><a href="./pdf/politica_privacidade.pdf" download="politica_privacidade.pdf">Política de Privacidade</a></li>
-                    <li><a href="./pdf/termos_uso.pdf" download="termos_uso.pdf">Termos de Uso</a></li>
-                    <li><a href="./pdf/trocas_devolucoes.pdf" download="trocas_devolucoes.pdf">Trocas e Devoluções</a></li>
-                </ul>
-            </div>
-            <div class="footer-column">
-                <h3>INFORMAÇÕES</h3>
-                <ul>
-                    <li><a href="sobre.php">Sobre Nós</a></li>
-                    <li><a href="#">Nossa História</a></li>
-                    <li><a href="#">Trabalhe Conosco</a></li>
-                    <li><a href="#">FAQ</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="copyright">
-            <p>&copy; <?php echo date('Y'); ?> LAVELLE Perfumes. Todos os direitos reservados.</p>
-        </div>
-    </div>
-</footer>
+        <?php
+       include 'footer.php';
+       ?>
 
     <script>
         // Controles do vídeo

@@ -2,9 +2,7 @@
 session_start();
 include 'conexao.php';
 
-// Verificar se usuário está logado
-$usuarioLogado = false;
-$usuarioNome = "";
+
 
 if (isset($_SESSION['usuario_id'])) {
     $usuarioLogado = true;
@@ -658,35 +656,13 @@ if (isset($_SESSION['usuario_id'])) {
         <h1>O perfume certo transforma a presença em memória.</h1>
     </div>
     <header>
-        <div class="container">
-            <div class="header-top">
-                <div class="logo">LAVELLE</div>
-                <nav>
-                    <ul>
-                        <li><a href="index.php">INÍCIO</a></li>
-                        <li><a href="paginaprodutos.php">PRODUTOS</a></li>
-                        <li><a href="sobre.php">SOBRE</a></li>
-                        <li><a href="contato.php" style="color: #8b7355;">CONTATO</a></li>
-                        
-                        <!-- Menu do Usuário -->
-                        <?php if ($usuarioLogado): ?>
-                            <div class="user-menu">
-                                <li><a href="perfil.php" class="profile-link">MEU PERFIL</a></li>
-                                <li><a href="logout.php">SAIR</a></li>
-                            </div>
-                        <?php else: ?>
-                           
-                        <?php endif; ?>
-                    </ul>
-                </nav>
-            </div>
-        </div>
+       <?php include 'header.php'; ?>
     </header>
 
     <!-- Hero Section com Vídeo -->
     <section class="page-hero">
         <video class="hero-video" autoplay muted loop playsinline>
-            <source src="contato.mp4" type="video/mp4">
+            <source src="contato2.mp4" type="video/mp4">
             <source src="hero-video.webm" type="video/webm">
             <!-- Fallback para navegadores que não suportam vídeo -->
             Seu navegador não suporta o elemento de vídeo.

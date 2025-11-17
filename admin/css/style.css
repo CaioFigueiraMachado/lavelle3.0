@@ -108,7 +108,9 @@ body {
   /* margin-left: 250px; */
   padding: 2rem;
 }
-
+a.btn-small.btn-success{
+  text-decoration: none;
+}
 .main-content-wrapper {
   width: -webkit-fill-available;
 }
@@ -164,6 +166,7 @@ body {
   font-size: 0.9rem;
   font-weight: 500;
   transition: all 0.3s;
+  text-decoration: none;
 }
 
 .btn-outline:hover {

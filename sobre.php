@@ -8,10 +8,12 @@ include 'conexao.php';
 // Verificar se usuário está logado
 $usuarioLogado = false;
 $usuarioNome = "";
+$empresa = "LAVELLE";
 
-if (isset($_SESSION['usuario_id'])) {
+// Suportar múltiplos padrões de nomes de sessão
+if (isset($_SESSION['usuario_id']) || isset($_SESSION['id'])) {
     $usuarioLogado = true;
-    $usuarioNome = $_SESSION['usuario_nome'];
+    $usuarioNome = $_SESSION['usuario_nome'] ?? $_SESSION['nome'] ?? 'Usuário';
 }
 ?>
     <meta charset="UTF-8">
@@ -718,34 +720,7 @@ if (isset($_SESSION['usuario_id'])) {
         <h1>O perfume certo transforma a presença em memória.</h1>
     </div>
     <header>
-        <div class="container">
-            <div class="header-top">
-                <div class="logo">LAVELLE</div>
-                <nav>
-                    <ul>
-                        <li><a href="index.php">INÍCIO</a></li>
-                        <li><a href="paginaprodutos.php">PRODUTOS</a></li>
-                        <li><a href="sobre.php" style="color: #8b7355;">SOBRE</a></li>
-                        <li><a href="contato.php">CONTATO</a></li>
-               
-                        
-                        <!-- Menu do Usuário -->
-                        <?php if ($usuarioLogado): ?>
-                            <div class="user-menu">
-                                <li><a href="perfil.php" class="profile-link">MEU PERFIL</a></li>
-                                <li><a href="logout.php">SAIR</a></li>
-                                
-                            </div>
-                        <?php else: ?>
-                            <div class="user-menu">
-                                
-                            
-                            </div>
-                        <?php endif; ?>
-                    </ul>
-                </nav>
-            </div>
-        </div>
+        <?php include 'header.php'; ?>
     </header>
 
     <!-- Hero Section -->
@@ -775,7 +750,7 @@ if (isset($_SESSION['usuario_id'])) {
                     <p>Hoje, somos reconhecidos como uma das principais perfumarias do país, com milhares de clientes satisfeitos e uma reputação construída sobre confiança, qualidade e excelência.</p>
                 </div>
                 <div class="story-image fade-in">
-                    <img src="sobre.jpg" alt="Nossa História">
+                    <img src="img/sobre.jpg" alt="Nossa História">
                 </div>
             </div>
         </div>
@@ -820,13 +795,13 @@ if (isset($_SESSION['usuario_id'])) {
             <h2 class="section-title">Nossos Valores</h2>
             <div class="values-grid">
                 <div class="value-card fade-in">
-                    <div class="value-icon">M</div>
-                    <h3>Missão</h3>
+                    <div class="value-icon">E</div>
+                    <h3>Experiências únicas</h3>
                     <p>Proporcionar experiências olfativas únicas e memoráveis, oferecendo perfumes de alta qualidade que expressem a personalidade e estilo de cada cliente.</p>
                 </div>
                 <div class="value-card fade-in">
-                    <div class="value-icon">V</div>
-                    <h3>Visão</h3>
+                    <div class="value-icon">I</div>
+                    <h3>Inovação</h3>
                     <p>Ser reconhecida como a principal referência em perfumaria no Brasil, inovando constantemente e mantendo a excelência em produtos e atendimento.</p>
                 </div>
                 <div class="value-card fade-in">
@@ -931,45 +906,7 @@ if (isset($_SESSION['usuario_id'])) {
     </section>
 
     <footer>
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-column">
-                    <h3>CONTATO</h3>
-                    <div class="contact-info">
-                        <p>E-mail: contatolavelle@gmail.com</p>
-                        <p>Endereço: Rua das Fragrâncias, 123 - Jardim Perfumado</p>
-                    </div>
-                </div>
-                <div class="footer-column">
-                    <h3>REDES SOCIAIS</h3>
-                    <div class="social-links">
-                        <a href="#">Facebook</a><br>
-                        <a href="#">Instagram</a><br>
-                        <a href="#">Twitter</a>
-                    </div>
-                </div>
-                <div class="footer-column">
-                    <h3>POLÍTICAS</h3>
-                    <ul>
-                        <li><a href="#">Política de Privacidade</a></li>
-                        <li><a href="#">Termos de Uso</a></li>
-                        <li><a href="#">Trocas e Devoluções</a></li>
-                    </ul>
-                </div>
-                <div class="footer-column">
-                    <h3>INFORMAÇÕES</h3>
-                    <ul>
-                        <li><a href="sobre.php">Sobre Nós</a></li>
-                        <li><a href="#">Nossa História</a></li>
-                        <li><a href="#">Trabalhe Conosco</a></li>
-                        <li><a href="#">FAQ</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="copyright">
-                <p>&copy; <?php echo date('Y'); ?> LAVELLE Perfumes. Todos os direitos reservados.</p>
-            </div>
-        </div>
+      <?php include 'footer.php'; ?>
     </footer>
 
     <script>

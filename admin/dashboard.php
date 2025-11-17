@@ -7,6 +7,7 @@ if(!isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) {
 }
 
 include 'config/database.php';
+include '../receipt_generator.php'; // Incluir o gerador de comprovantes
 
 $database = new Database();
 $db = $database->getConnection();
@@ -14,7 +15,10 @@ $db = $database->getConnection();
 // Estatísticas - com tratamento de erro
 $total_usuarios = 0;
 $total_produtos = 0;
+$total_pedidos = 0;
+$receita_total = 0;
 $ultimos_usuarios = [];
+$ultimos_pedidos = [];
 
 try {
     // Contar usuários
@@ -37,6 +41,19 @@ try {
 }
 
 try {
+    // Contar pedidos e calcular receita
+    $query_pedidos = "SELECT COUNT(*) as total, COALESCE(SUM(total), 0) as receita FROM pedidos";
+    $stmt_pedidos = $db->prepare($query_pedidos);
+    $stmt_pedidos->execute();
+    $result_pedidos = $stmt_pedidos->fetch(PDO::FETCH_ASSOC);
+    $total_pedidos = $result_pedidos['total'];
+    $receita_total = $result_pedidos['receita'];
+} catch(PDOException $e) {
+    $total_pedidos = 0;
+    $receita_total = 0;
+}
+
+try {
     // Últimos usuários cadastrados
     $query_ultimos_usuarios = "SELECT nome, email, created_at FROM usuarios ORDER BY created_at DESC LIMIT 5";
     $stmt_ultimos_usuarios = $db->prepare($query_ultimos_usuarios);
@@ -44,6 +61,33 @@ try {
     $ultimos_usuarios = $stmt_ultimos_usuarios->fetchAll(PDO::FETCH_ASSOC);
 } catch(PDOException $e) {
     $ultimos_usuarios = [];
+}
+
+try {
+    // Últimos pedidos
+    $query_ultimos_pedidos = "
+        SELECT p.id, p.data_pedido, p.total, p.status, u.nome as cliente_nome 
+        FROM pedidos p 
+        LEFT JOIN usuarios u ON p.usuario_id = u.id 
+        ORDER BY p.data_pedido DESC LIMIT 5
+    ";
+    $stmt_ultimos_pedidos = $db->prepare($query_ultimos_pedidos);
+    $stmt_ultimos_pedidos->execute();
+    $ultimos_pedidos = $stmt_ultimos_pedidos->fetchAll(PDO::FETCH_ASSOC);
+} catch(PDOException $e) {
+    $ultimos_pedidos = [];
+}
+
+// Processar geração de comprovante
+if (isset($_GET['gerar_comprovante'])) {
+    $pedido_id = $_GET['gerar_comprovante'];
+    $receiptGenerator = new ReceiptGenerator();
+    $filename = $receiptGenerator->generateReceipt($pedido_id, $db);
+    
+    // Mensagem de sucesso
+    $_SESSION['mensagem_sucesso'] = "Comprovante gerado com sucesso!";
+    header("Location: pedidos.php");
+    exit;
 }
 
 include 'includes/header.php';
@@ -74,7 +118,6 @@ include 'includes/sidebar.php';
 
     <div class="stats-grid">
         <div class="stat-card">
-          
             <div class="stat-info">
                 <div class="stat-number"><?php echo $total_usuarios; ?></div>
                 <div class="stat-label">Total de Usuários</div>
@@ -82,7 +125,6 @@ include 'includes/sidebar.php';
         </div>
         
         <div class="stat-card">
-           
             <div class="stat-info">
                 <div class="stat-number"><?php echo $total_produtos; ?></div>
                 <div class="stat-label">Total de Produtos</div>
@@ -90,17 +132,67 @@ include 'includes/sidebar.php';
         </div>
         
         <div class="stat-card">
-           
             <div class="stat-info">
-                <div class="stat-number">R$ 12.500</div>
-                <div class="stat-label">Receita Total</div>
+                <div class="stat-number"><?php echo $total_pedidos; ?></div>
+                <div class="stat-label">Total de Pedidos</div>
             </div>
         </div>
         
-       
+        <div class="stat-card">
+            <div class="stat-info">
+                <div class="stat-number">R$ <?php echo number_format($receita_total, 2, ',', '.'); ?></div>
+                <div class="stat-label">Receita Total</div>
+            </div>
+        </div>
     </div>
 
     <div class="content-grid">
+        <div class="content-card">
+            <div class="card-header">
+                <h2>Últimos Pedidos</h2>
+                <a href="pedidos.php" class="btn-link">Ver Todos</a>
+            </div>
+            <div class="table-responsive">
+                <?php if(!empty($ultimos_pedidos)): ?>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Cliente</th>
+                                <th>Data</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach($ultimos_pedidos as $pedido): ?>
+                            <tr>
+                                <td>#<?php echo str_pad($pedido['id'], 3, '0', STR_PAD_LEFT); ?></td>
+                                <td><?php echo htmlspecialchars($pedido['cliente_nome']); ?></td>
+                                <td><?php echo date('d/m/Y', strtotime($pedido['data_pedido'])); ?></td>
+                                <td>R$ <?php echo number_format($pedido['total'], 2, ',', '.'); ?></td>
+                                <td>
+                                    <span class="status-badge status-<?php echo $pedido['status']; ?>">
+                                        <?php echo ucfirst($pedido['status']); ?>
+                                    </span>
+                                </td>
+                                <td>
+                                  
+                                    <a href="?gerar_comprovante=<?php echo $pedido['id']; ?>" class="btn-small btn-success">Comprovante</a>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php else: ?>
+                    <p style="text-align: center; color: #666; padding: 2rem;">
+                        Nenhum pedido encontrado.
+                    </p>
+                <?php endif; ?>
+            </div>
+        </div>
+
         <div class="content-card">
             <div class="card-header">
                 <h2>Últimos Usuários Cadastrados</h2>
@@ -149,25 +241,25 @@ include 'includes/sidebar.php';
             <div class="quick-actions">
                 <a href="usuarios.php?action=create" class="quick-action-btn">
                     <div class="action-icon">
-                        <img src="../novouser.png" alt="Novo Usuário" class="action-icon-img">
+                        <img src="../img/novouser.png" alt="Novo Usuário" class="action-icon-img">
                     </div>
                     <span>Novo Usuário</span>
                 </a>
                 <a href="produtos.php?action=create" class="quick-action-btn">
                     <div class="action-icon">
-                        <img src="../novo.png" alt="Novo Produto" class="action-icon-img">
+                        <img src="../img/novo.png" alt="Novo Produto" class="action-icon-img">
                     </div>
                     <span>Novo Produto</span>
                 </a>
-                <a href="usuarios.php" class="quick-action-btn">
+                <a href="pedidos.php" class="quick-action-btn">
                     <div class="action-icon">
-                        <img src="../iconmais.png" alt="Gerenciar Usuários" class="action-icon-img">
+                        <img src="../img/iconmais.png" alt="Gerenciar Pedidos" class="action-icon-img">
                     </div>
-                    <span>Gerenciar Usuários</span>
+                    <span>Gerenciar Pedidos</span>
                 </a>
                 <a href="produtos.php" class="quick-action-btn">
                     <div class="action-icon">
-                        <img src="../gerenciarprodutos.png" alt="Gerenciar Produtos" class="action-icon-img">
+                        <img src="../img/gerenciarprodutos.png" alt="Gerenciar Produtos" class="action-icon-img">
                     </div>
                     <span>Gerenciar Produtos</span>
                 </a>

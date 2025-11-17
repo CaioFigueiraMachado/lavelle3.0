@@ -22,6 +22,8 @@ $vencimento = date('d/m/Y', strtotime('+2 weekdays'));
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pagamento Boleto - LAVELLE</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <style>
         * {
             margin: 0;
@@ -431,7 +433,7 @@ $vencimento = date('d/m/Y', strtotime('+2 weekdays'));
                 <button class="btn" onclick="copyBarcode()">
                     <i class="far fa-copy"></i> Copiar Código
                 </button>
-                <button class="btn" onclick="simulatePayment()" >
+                <button class="btn" onclick="simulatePayment()">
                     <i class="fas fa-check"></i> Confirmar Pagamento
                 </button>
             </div>
@@ -462,6 +464,8 @@ $vencimento = date('d/m/Y', strtotime('+2 weekdays'));
         LAVELLE &copy; 2025 - Todos os direitos reservados
     </div>
 
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
     <script>
         function printBoleto() {
             // Feedback visual
@@ -470,11 +474,17 @@ $vencimento = date('d/m/Y', strtotime('+2 weekdays'));
             printBtn.innerHTML = '<i class="fas fa-check"></i> Boleto Impresso!';
             printBtn.style.background = '#32b572';
             
-            setTimeout(() => {
-                alert('Boleto impresso com sucesso! Em um ambiente real, esta função abriria o boleto em PDF.');
+            // SweetAlert2 para confirmação de impressão
+            Swal.fire({
+                title: 'Boleto Impresso!',
+                text: 'Em um ambiente real, esta função abriria o boleto em PDF.',
+                icon: 'success',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#32b572'
+            }).then(() => {
                 printBtn.innerHTML = originalText;
                 printBtn.style.background = '';
-            }, 1000);
+            });
         }
         
         function copyBarcode() {
@@ -486,36 +496,131 @@ $vencimento = date('d/m/Y', strtotime('+2 weekdays'));
                 copyBtn.innerHTML = '<i class="fas fa-check"></i> Código Copiado!';
                 copyBtn.style.background = '#32b572';
                 
+                // SweetAlert2 para confirmação de cópia
+                Swal.fire({
+                    title: 'Código Copiado!',
+                    text: 'O código de barras foi copiado para a área de transferência.',
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    copyBtn.innerHTML = originalText;
+                    copyBtn.style.background = '';
+                });
+                
                 setTimeout(() => {
                     copyBtn.innerHTML = originalText;
                     copyBtn.style.background = '';
                 }, 2000);
             }).catch(err => {
-                alert('Erro ao copiar o código. Tente novamente.');
+                Swal.fire({
+                    title: 'Erro',
+                    text: 'Erro ao copiar o código. Tente novamente.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
             });
         }
         
         function simulatePayment() {
-            document.getElementById('successMessage').style.display = 'flex';
-            
-            // Desabilitar botões após pagamento
-            document.querySelectorAll('.btn').forEach(btn => {
-                if (!btn.classList.contains('btn-outline')) {
-                    btn.disabled = true;
-                    btn.style.opacity = '0.6';
-                    btn.style.cursor = 'not-allowed';
+            // SweetAlert2 para confirmação de pagamento
+            Swal.fire({
+                title: 'Confirmar Pagamento?',
+                text: `Você está prestes a confirmar o pagamento de R$ <?php echo number_format($total_compra, 2, ',', '.'); ?>`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sim, Confirmar Pagamento',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#32b572',
+                cancelButtonColor: '#d33'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Mostrar mensagem de sucesso
+                    document.getElementById('successMessage').style.display = 'flex';
+                    
+                    // Desabilitar botões após pagamento
+                    document.querySelectorAll('.btn').forEach(btn => {
+                        if (!btn.classList.contains('btn-outline')) {
+                            btn.disabled = true;
+                            btn.style.opacity = '0.6';
+                            btn.style.cursor = 'not-allowed';
+                        }
+                    });
+                    
+                    // SweetAlert2 de sucesso
+                    Swal.fire({
+                        title: 'Pagamento Confirmado!',
+                        text: 'Obrigado pela preferência. Você será redirecionado para a página inicial.',
+                        icon: 'success',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#32b572',
+                        timer: 3000,
+                        timerProgressBar: true
+                    }).then(() => {
+                        // Redirecionar para index.php
+                        window.location.href = 'index.php';
+                    });
+                    
+                    // Redirecionar automaticamente após 3 segundos
+                    setTimeout(() => {
+                        window.location.href = 'index.php';
+                    }, 3000);
                 }
             });
-            
-            setTimeout(() => {
-                alert('Pagamento confirmado! Obrigado pela preferência.');
-            }, 500);
-            
-            // Redirecionar após alguns segundos (simulação)
-            setTimeout(() => {
-                window.location.href = 'produtos.php?pagamento=sucesso';
-            }, 3000);
         }
+        // Após o pagamento ser confirmado, adicione:
+function processarPedidoAposPagamento($db, $metodo_pagamento) {
+    try {
+        // Inserir pedido no banco de dados
+        $stmt = $db->prepare("
+            INSERT INTO pedidos (usuario_id, data_pedido, total, status, metodo_pagamento, endereco_entrega) 
+            VALUES (?, NOW(), ?, 'pendente', ?, ?)
+        ");
+        
+        $stmt->execute([
+            $_SESSION['id'],
+            $_SESSION['total_compra'],
+            $metodo_pagamento,
+            $_SESSION['endereco_entrega']
+        ]);
+        
+        $pedido_id = $db->lastInsertId();
+        
+        // Inserir itens do pedido
+        foreach ($_SESSION['produtos_carrinho'] as $produto_id => $item) {
+            $stmt = $db->prepare("
+                INSERT INTO pedido_itens (pedido_id, produto_id, quantidade, preco_unitario, subtotal) 
+                VALUES (?, ?, ?, ?, ?)
+            ");
+            $stmt->execute([
+                $pedido_id,
+                $produto_id,
+                $item['quantidade'],
+                $item['produto']['preco'],
+                $item['subtotal']
+            ]);
+        }
+        
+        // Gerar comprovante automaticamente
+        require_once 'receipt_generator.php';
+        $receiptGenerator = new ReceiptGenerator();
+        $filename = $receiptGenerator->generateReceipt($pedido_id, $db);
+        
+        // Limpar carrinho
+        unset($_SESSION['carrinho']);
+        unset($_SESSION['produtos_carrinho']);
+        unset($_SESSION['endereco_entrega']);
+        unset($_SESSION['total_compra']);
+        unset($_SESSION['itens_carrinho']);
+        unset($_SESSION['metodo_pagamento']);
+        
+        return $pedido_id;
+        
+    } catch(PDOException $e) {
+        error_log("Erro ao salvar pedido: " . $e->getMessage());
+        return false;
+    }
+}
     </script>
 </body>
 </html>

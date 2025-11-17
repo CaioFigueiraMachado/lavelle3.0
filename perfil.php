@@ -18,6 +18,34 @@ $stmt = $con->prepare($sql);
 $stmt->execute([$usuario_id]);
 $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
+// Buscar pedidos do usuário - VERSÃO CORRIGIDA
+try {
+    $sql_pedidos = "SELECT * FROM pedidos WHERE usuario_id = ? ORDER BY data_pedido DESC LIMIT 5";
+    $stmt_pedidos = $con->prepare($sql_pedidos);
+    $stmt_pedidos->execute([$usuario_id]);
+    $pedidos = $stmt_pedidos->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Usar os pedidos normais (sem JOIN com enderecos_entrega)
+    $pedidos_completos = $pedidos;
+    
+} catch (PDOException $e) {
+    $pedidos = [];
+    $pedidos_completos = [];
+    error_log("Erro ao buscar pedidos: " . $e->getMessage());
+}
+
+// Buscar favoritos do usuário (se a tabela existir)
+try {
+    $sql_favoritos = "SELECT p.* FROM produtos p 
+                     INNER JOIN favoritos f ON p.id = f.produto_id 
+                     WHERE f.usuario_id = ? LIMIT 6";
+    $stmt_favoritos = $con->prepare($sql_favoritos);
+    $stmt_favoritos->execute([$usuario_id]);
+    $favoritos = $stmt_favoritos->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $favoritos = [];
+}
+
 // Verificar se a coluna foto_perfil existe
 $coluna_existe = false;
 try {
@@ -74,6 +102,40 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
     
+    // Alteração de senha
+    if (isset($_POST['senha_atual']) && !empty($_POST['senha_atual'])) {
+        $senha_atual = $_POST['senha_atual'];
+        $nova_senha = $_POST['nova_senha'];
+        $confirmar_senha = $_POST['confirmar_senha'];
+        
+        if (password_verify($senha_atual, $usuario['senha'])) {
+            if ($nova_senha === $confirmar_senha) {
+                if (strlen($nova_senha) >= 6) {
+                    $nova_senha_hash = password_hash($nova_senha, PASSWORD_DEFAULT);
+                    $sql = "UPDATE usuarios SET senha = ? WHERE id = ?";
+                    $stmt = $con->prepare($sql);
+                    
+                    if ($stmt->execute([$nova_senha_hash, $usuario_id])) {
+                        $mensagem = "Senha alterada com sucesso!";
+                        $tipoMensagem = "success";
+                    } else {
+                        $mensagem = "Erro ao alterar senha. Tente novamente.";
+                        $tipoMensagem = "error";
+                    }
+                } else {
+                    $mensagem = "A nova senha deve ter pelo menos 6 caracteres.";
+                    $tipoMensagem = "error";
+                }
+            } else {
+                $mensagem = "As senhas não coincidem.";
+                $tipoMensagem = "error";
+            }
+        } else {
+            $mensagem = "Senha atual incorreta.";
+            $tipoMensagem = "error";
+        }
+    }
+    
     // Upload de foto de perfil
     if ($coluna_existe && isset($_FILES['foto_perfil']) && $_FILES['foto_perfil']['error'] === UPLOAD_ERR_OK) {
         $foto = $_FILES['foto_perfil'];
@@ -121,9 +183,11 @@ if ($coluna_existe) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu Perfil - LAVELLE Perfumes</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        /* Reset e estilos gerais - Igual ao index.php */
-        * {
+    * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
@@ -240,6 +304,55 @@ if ($coluna_existe) {
         .profile-header p {
             font-size: 18px;
             color: #666;
+        }
+
+        /* Abas de navegação */
+        .profile-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #eee;
+            flex-wrap: wrap;
+        }
+
+        .profile-tab {
+            padding: 15px 30px;
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: 500;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .profile-tab:hover {
+            color: #8b7355;
+        }
+
+        .profile-tab.active {
+            color: #8b7355;
+            font-weight: 600;
+        }
+
+        .profile-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #8b7355;
+        }
+
+        /* Conteúdo das abas */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
         }
 
         /* Layout do Perfil */
@@ -469,6 +582,105 @@ if ($coluna_existe) {
             border-left: 4px solid #e74c3c;
         }
 
+        /* Seções adicionais */
+        .pedidos-list, .favoritos-grid {
+            margin-top: 30px;
+        }
+
+        .pedido-item, .favorito-item {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-left: 4px solid #8b7355;
+        }
+
+        .pedido-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .pedido-id {
+            font-weight: bold;
+            color: #000;
+        }
+
+        .pedido-status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-pendente { background: #fff3cd; color: #856404; }
+        .status-processando { background: #cce7ff; color: #004085; }
+        .status-enviado { background: #d1ecf1; color: #0c5460; }
+        .status-entregue { background: #d4edda; color: #155724; }
+
+        .pedido-detalhes {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            font-size: 14px;
+        }
+
+        .pedido-valor {
+            font-weight: bold;
+            color: #8b7355;
+            font-size: 16px;
+        }
+
+        .favoritos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .favorito-item {
+            text-align: center;
+            padding: 20px;
+            transition: transform 0.3s;
+        }
+
+        .favorito-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .favorito-imagem {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .favorito-nome {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #000;
+        }
+
+        .favorito-preco {
+            color: #8b7355;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #ddd;
+        }
+
         /* Footer - Igual ao index.php */
         footer {
             background-color: #000;
@@ -594,6 +806,14 @@ if ($coluna_existe) {
                 width: 140px;
                 height: 140px;
             }
+
+            .pedido-detalhes {
+                grid-template-columns: 1fr;
+            }
+
+            .favoritos-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
         }
 
         @media (max-width: 480px) {
@@ -613,6 +833,14 @@ if ($coluna_existe) {
             .profile-avatar-placeholder {
                 width: 120px;
                 height: 120px;
+            }
+
+            .profile-tabs {
+                flex-direction: column;
+            }
+
+            .profile-tab {
+                text-align: center;
             }
         }
         /* Header Banner */
@@ -640,9 +868,10 @@ if ($coluna_existe) {
     </style>
 </head>
 <body>
-     <div class="header-banner">
+    <div class="header-banner">
         <h1>O perfume certo transforma a presença em memória.</h1>
     </div>
+    
     <header>
         <div class="container">
             <div class="header-top">
@@ -655,7 +884,7 @@ if ($coluna_existe) {
                         <li><a href="contato.php">CONTATO</a></li>
                         
                         <div class="user-menu">
-                            <span style="color: #8b7355; font-weight: 500;">Olá, <?php echo htmlspecialchars($usuario['nome']); ?></span>
+                            <span style="color: #8b7355; font-weight: 600;">Olá, <?php echo htmlspecialchars($usuario['nome']); ?></span>
                             <li><a href="perfil.php" class="profile-link">MEU PERFIL</a></li>
                             <li><a href="logout.php">SAIR</a></li>
                         </div>
@@ -679,116 +908,268 @@ if ($coluna_existe) {
                     </div>
                 <?php endif; ?>
                 
-                <div class="profile-layout">
-                    <!-- Sidebar do Perfil -->
-                    <div class="profile-sidebar">
-                        <div class="profile-avatar-container">
-                            <?php if (!empty($usuario['foto_perfil'])): ?>
-                                <img src="<?php echo htmlspecialchars($usuario['foto_perfil']); ?>" 
-                                     alt="Foto de perfil" class="profile-avatar" id="profile-avatar">
-                            <?php else: ?>
-                                <div class="profile-avatar-placeholder">
-                                    <?php echo strtoupper(substr($usuario['nome'], 0, 1)); ?>
-                                </div>
-                            <?php endif; ?>
+                <!-- Abas de navegação -->
+                <div class="profile-tabs">
+                    <button class="profile-tab active" data-tab="perfil">Perfil</button>
+                   
+                    <button class="profile-tab" data-tab="seguranca">Segurança</button>
+                </div>
+                
+                <!-- Conteúdo das abas -->
+                <div class="tab-content active" id="tab-perfil">
+                    <div class="profile-layout">
+                        <!-- Sidebar do Perfil -->
+                        <div class="profile-sidebar">
+                            <div class="profile-avatar-container">
+                                <?php if (!empty($usuario['foto_perfil'])): ?>
+                                    <img src="<?php echo htmlspecialchars($usuario['foto_perfil']); ?>" 
+                                         alt="Foto de perfil" class="profile-avatar" id="profile-avatar">
+                                <?php else: ?>
+                                    <div class="profile-avatar-placeholder">
+                                        <?php echo strtoupper(substr($usuario['nome'], 0, 1)); ?>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <form method="POST" action="" enctype="multipart/form-data" id="photo-form">
+                                    <input type="file" name="foto_perfil" id="foto_perfil" class="file-input" 
+                                           accept="image/jpeg, image/png, image/gif" <?php echo !$coluna_existe ? 'disabled' : ''; ?>>
+                                    <label for="foto_perfil" class="upload-btn" <?php echo !$coluna_existe ? 'style="background-color: #ccc; cursor: not-allowed;"' : ''; ?>>
+                                        <?php echo $coluna_existe ? 'Alterar Foto' : 'Upload Indisponível'; ?>
+                                    </label>
+                                    <div class="file-info">
+                                        <?php if ($coluna_existe): ?>
+                                            Formatos: JPG, PNG, GIF (Máx. 2MB)
+                                        <?php else: ?>
+                                            Sistema de fotos em manutenção
+                                        <?php endif; ?>
+                                    </div>
+                                </form>
+                            </div>
                             
-                            <form method="POST" action="" enctype="multipart/form-data" id="photo-form">
-                                <input type="file" name="foto_perfil" id="foto_perfil" class="file-input" 
-                                       accept="image/jpeg, image/png, image/gif" <?php echo !$coluna_existe ? 'disabled' : ''; ?>>
-                                <label for="foto_perfil" class="upload-btn" <?php echo !$coluna_existe ? 'style="background-color: #ccc; cursor: not-allowed;"' : ''; ?>>
-                                    <?php echo $coluna_existe ? 'Alterar Foto' : 'Upload Indisponível'; ?>
-                                </label>
-                                <div class="file-info">
-                                    <?php if ($coluna_existe): ?>
-                                        Formatos: JPG, PNG, GIF (Máx. 2MB)
-                                    <?php else: ?>
-                                        Sistema de fotos em manutenção
-                                    <?php endif; ?>
+                            <div class="profile-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Membro desde</span>
+                                    <span class="stat-value">
+                                        <?php echo date('d/m/Y', strtotime($usuario['created_at'] ?? $usuario['data_cadastro'] ?? '2024-01-01')); ?>
+                                    </span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Pedidos</span>
+                                    <span class="stat-value"><?php echo count($pedidos); ?></span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Favoritos</span>
+                                    <span class="stat-value"><?php echo count($favoritos); ?></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Formulário do Perfil -->
+                        <div class="profile-form-container">
+                            <form method="POST" action="" enctype="multipart/form-data">
+                                <div class="form-section">
+                                    <h3>Informações Pessoais</h3>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label" for="nome">
+                                                <i class=""></i>Nome Completo
+                                            </label>
+                                            <input type="text" class="form-input" id="nome" name="nome" 
+                                                   value="<?php echo htmlspecialchars($usuario['nome']); ?>" required>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label class="form-label" for="email">
+                                                <i class=""></i>E-mail
+                                            </label>
+                                            <input type="email" class="form-input" id="email" 
+                                                   value="<?php echo htmlspecialchars($usuario['email']); ?>" disabled>
+                                            <div class="form-note">O e-mail não pode ser alterado</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label" for="telefone">
+                                                <i class=""></i>Telefone
+                                            </label>
+                                            <input type="tel" class="form-input" id="telefone" name="telefone" 
+                                                   value="<?php echo htmlspecialchars($usuario['telefone'] ?? ''); ?>">
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label class="form-label" for="cep">
+                                                <i class=""></i>CEP
+                                            </label>
+                                            <input type="text" class="form-input" id="cep" name="cep" 
+                                                   value="<?php echo htmlspecialchars($usuario['cep'] ?? ''); ?>">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-section">
+                                    <h3>Endereço</h3>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label" for="endereco">
+                                            <i class=""></i>Endereço Completo
+                                        </label>
+                                        <input type="text" class="form-input" id="endereco" name="endereco" 
+                                               value="<?php echo htmlspecialchars($usuario['endereco'] ?? ''); ?>">
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label" for="cidade">
+                                                <i class=""></i>Cidade
+                                            </label>
+                                            <input type="text" class="form-input" id="cidade" name="cidade" 
+                                                   value="<?php echo htmlspecialchars($usuario['cidade'] ?? ''); ?>">
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label class="form-label" for="estado">
+                                                <i class=""></i>Estado
+                                            </label>
+                                            <input type="text" class="form-input" id="estado" name="estado" 
+                                                   value="<?php echo htmlspecialchars($usuario['estado'] ?? ''); ?>">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="profile-actions">
+                                    <button type="submit" class="btn">
+                                        <i class="fas fa-save"></i> Salvar Alterações
+                                    </button>
+                                    <a href="index.php" class="btn btn-outline">
+                                        <i class="fas fa-arrow-left"></i> Voltar para Início
+                                    </a>
                                 </div>
                             </form>
                         </div>
-                        
-                        <div class="profile-stats">
-                            <div class="stat-item">
-                                <span class="stat-label">Membro desde</span>
-                                <span class="stat-value">
-                                    <?php echo date('d/m/Y', strtotime($usuario['created_at'] ?? $usuario['data_cadastro'] ?? '2024-01-01')); ?>
-                                </span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Pedidos</span>
-                                <span class="stat-value">0</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Favoritos</span>
-                                <span class="stat-value">0</span>
-                            </div>
-                        </div>
                     </div>
-                    
-                    <!-- Formulário do Perfil -->
+                </div>
+                
+                <!-- Aba de Pedidos - VERSÃO CORRIGIDA -->
+                <div class="tab-content" id="tab-pedidos">
                     <div class="profile-form-container">
-                        <form method="POST" action="" enctype="multipart/form-data">
-                            <div class="form-section">
-                                <h3>Informações Pessoais</h3>
-                                
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label class="form-label" for="nome">Nome Completo</label>
-                                        <input type="text" class="form-input" id="nome" name="nome" 
-                                               value="<?php echo htmlspecialchars($usuario['nome']); ?>" required>
+                        <h3>Meus Pedidos Recentes</h3>
+                        
+                        <?php if (count($pedidos_completos) > 0): ?>
+                            <div class="pedidos-list">
+                                <?php foreach ($pedidos_completos as $pedido): ?>
+                                    <div class="pedido-item">
+                                        <div class="pedido-header">
+                                            <span class="pedido-id">Pedido #<?php echo $pedido['id']; ?></span>
+                                            <span class="pedido-status status-<?php echo strtolower($pedido['status'] ?? 'pendente'); ?>">
+                                                <?php echo $pedido['status'] ?? 'Pendente'; ?>
+                                            </span>
+                                        </div>
+                                        <div class="pedido-detalhes">
+                                            <div>
+                                                <strong>Data:</strong> <?php echo date('d/m/Y H:i', strtotime($pedido['data_pedido'])); ?>
+                                            </div>
+                                            <div>
+                                                <strong>Total:</strong> R$ <?php echo number_format($pedido['total'], 2, ',', '.'); ?>
+                                            </div>
+                                            <div>
+                                                <strong>Método de Pagamento:</strong> <?php echo $pedido['metodo_pagamento'] ?? 'Não informado'; ?>
+                                            </div>
+                                            <div class="pedido-valor">
+                                                <strong>Status:</strong> <?php echo $pedido['status']; ?>
+                                            </div>
+                                            <?php if (!empty($pedido['endereco_entrega'])): ?>
+                                            <div style="grid-column: 1 / -1; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(139, 115, 85, 0.1); background: rgba(139, 115, 85, 0.03); padding: 15px; border-radius: 8px;">
+                                                <strong style="color: #8b7355;">Endereço de Entrega:</strong><br>
+                                                <?php echo nl2br(htmlspecialchars($pedido['endereco_entrega'])); ?>
+                                            </div>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
-                                    
-                                    <div class="form-group">
-                                        <label class="form-label" for="email">E-mail</label>
-                                        <input type="email" class="form-input" id="email" 
-                                               value="<?php echo htmlspecialchars($usuario['email']); ?>" disabled>
-                                        <div class="form-note">O e-mail não pode ser alterado</div>
-                                    </div>
-                                </div>
-                                
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label class="form-label" for="telefone">Telefone</label>
-                                        <input type="tel" class="form-input" id="telefone" name="telefone" 
-                                               value="<?php echo htmlspecialchars($usuario['telefone'] ?? ''); ?>">
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label class="form-label" for="cep">CEP</label>
-                                        <input type="text" class="form-input" id="cep" name="cep" 
-                                               value="<?php echo htmlspecialchars($usuario['cep'] ?? ''); ?>">
-                                    </div>
-                                </div>
+                                <?php endforeach; ?>
                             </div>
-                            
+                        <?php else: ?>
+                            <div class="empty-state">
+                                <i class="fas fa-shopping-bag"></i>
+                                <h3>Nenhum pedido encontrado</h3>
+                                <p>Você ainda não realizou nenhum pedido em nossa loja.</p>
+                                <a href="paginaprodutos.php" class="btn" style="margin-top: 20px;">Explorar Produtos</a>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                
+                <!-- Aba de Favoritos -->
+                <div class="tab-content" id="tab-favoritos">
+                    <div class="profile-form-container">
+                        <h3>Meus Favoritos</h3>
+                        
+                        <?php if (count($favoritos) > 0): ?>
+                            <div class="favoritos-grid">
+                                <?php foreach ($favoritos as $favorito): ?>
+                                    <div class="favorito-item">
+                                        <img src="<?php echo htmlspecialchars($favorito['imagem'] ?? 'images/produto-placeholder.jpg'); ?>" 
+                                             alt="<?php echo htmlspecialchars($favorito['nome']); ?>" class="favorito-imagem">
+                                        <div class="favorito-nome"><?php echo htmlspecialchars($favorito['nome']); ?></div>
+                                        <div class="favorito-preco">R$ <?php echo number_format($favorito['preco'], 2, ',', '.'); ?></div>
+                                        <a href="produto.php?id=<?php echo $favorito['id']; ?>" class="btn" style="padding: 10px 20px; font-size: 14px; width: 100%;">Ver Produto</a>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="empty-state">
+                                <i class="fas fa-heart"></i>
+                                <h3>Nenhum favorito adicionado</h3>
+                                <p>Adicione produtos aos seus favoritos para vê-los aqui.</p>
+                                <a href="paginaprodutos.php" class="btn" style="margin-top: 20px;">Explorar Produtos</a>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                
+                <!-- Aba de Segurança -->
+                <div class="tab-content" id="tab-seguranca">
+                    <div class="profile-form-container">
+                        <form method="POST" action="">
                             <div class="form-section">
-                                <h3>Endereço</h3>
+                                <h3>Alterar Senha</h3>
                                 
                                 <div class="form-group">
-                                    <label class="form-label" for="endereco">Endereço Completo</label>
-                                    <input type="text" class="form-input" id="endereco" name="endereco" 
-                                           value="<?php echo htmlspecialchars($usuario['endereco'] ?? ''); ?>">
+                                    <label class="form-label" for="senha_atual">
+                                        <i class=""></i>Senha Atual
+                                    </label>
+                                    <input type="password" class="form-input" id="senha_atual" name="senha_atual" placeholder="Digite sua senha atual">
                                 </div>
                                 
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label class="form-label" for="cidade">Cidade</label>
-                                        <input type="text" class="form-input" id="cidade" name="cidade" 
-                                               value="<?php echo htmlspecialchars($usuario['cidade'] ?? ''); ?>">
+                                        <label class="" for="nova_senha">
+                                            <i class=""></i>Nova Senha
+                                        </label>
+                                        <input type="password" class="form-input" id="nova_senha" name="nova_senha" placeholder="Digite a nova senha">
                                     </div>
                                     
                                     <div class="form-group">
-                                        <label class="form-label" for="estado">Estado</label>
-                                        <input type="text" class="form-input" id="estado" name="estado" 
-                                               value="<?php echo htmlspecialchars($usuario['estado'] ?? ''); ?>">
+                                        <label class="form-label" for="confirmar_senha">
+                                            <i class=""></i>Confirmar Nova Senha
+                                        </label>
+                                        <input type="password" class="form-input" id="confirmar_senha" name="confirmar_senha" placeholder="Confirme a nova senha">
                                     </div>
+                                </div>
+                                
+                                <div class="form-note">
+                                    <i class="fas fa-info-circle"></i> A senha deve ter pelo menos 6 caracteres.
                                 </div>
                             </div>
                             
                             <div class="profile-actions">
-                                <button type="submit" class="btn">Salvar Alterações</button>
-                                <a href="index.php" class="btn btn-outline">Voltar para Início</a>
+                                <button type="submit" class="btn">
+                                    <i class="fas fa-sync-alt"></i> Alterar Senha
+                                </button>
+                                <a href="index.php" class="btn btn-outline">
+                                    <i class="fas fa-times"></i> Cancelar
+                                </a>
                             </div>
                         </form>
                     </div>
@@ -798,48 +1179,24 @@ if ($coluna_existe) {
     </section>
     
     <footer>
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-column">
-                    <h3>CONTATO</h3>
-                    <div class="contact-info">
-                        <p>E-mail: contatolavelle@gmail.com</p>
-                        <p>Endereço: Rua das Fragrâncias, 123 - Jardim Perfumado</p>
-                    </div>
-                </div>
-                <div class="footer-column">
-                    <h3>REDES SOCIAIS</h3>
-                    <div class="social-links">
-                        <a href="#">Facebook</a><br>
-                        <a href="#">Instagram</a><br>
-                        <a href="#">Twitter</a>
-                    </div>
-                </div>
-                <div class="footer-column">
-                    <h3>POLÍTICAS</h3>
-                    <ul>
-                        <li><a href="#">Política de Privacidade</a></li>
-                        <li><a href="#">Termos de Uso</a></li>
-                        <li><a href="#">Trocas e Devoluções</a></li>
-                    </ul>
-                </div>
-                <div class="footer-column">
-                    <h3>INFORMAÇÕES</h3>
-                    <ul>
-                        <li><a href="sobre.php">Sobre Nós</a></li>
-                        <li><a href="#">Nossa História</a></li>
-                        <li><a href="#">Trabalhe Conosco</a></li>
-                        <li><a href="#">FAQ</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="copyright">
-                <p>&copy; <?php echo date('Y'); ?> LAVELLE Perfumes. Todos os direitos reservados.</p>
-            </div>
-        </div>
+       <?php include 'footer.php';?>
     </footer>
 
     <script>
+        // Sistema de abas
+        document.querySelectorAll('.profile-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove classe active de todas as abas
+                document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Adiciona classe active à aba clicada
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(`tab-${tabId}`).classList.add('active');
+            });
+        });
+        
         // Upload automático da foto quando selecionada
         document.getElementById('foto_perfil')?.addEventListener('change', function() {
             if (this.files && this.files[0]) {

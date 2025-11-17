@@ -1,5 +1,6 @@
 <?php
 session_start();
+include 'conexao.php';
 
 // Verificar se o usuário está logado
 if (!isset($_SESSION['id'])) {
@@ -8,9 +9,15 @@ if (!isset($_SESSION['id'])) {
 }
 
 // Verificar se existe carrinho e total
-if (!isset($_SESSION['total_compra']) || !isset($_SESSION['itens_carrinho']) || empty($_SESSION['itens_carrinho'])) {
+if (!isset($_SESSION['total_compra']) || !isset($_SESSION['produtos_carrinho']) || empty($_SESSION['produtos_carrinho'])) {
     // Redirecionar de volta para o carrinho se não houver itens
     header('Location: paginaprodutos.php');
+    exit();
+}
+
+// Verificar se há endereço de entrega
+if (!isset($_SESSION['endereco_entrega'])) {
+    header('Location: endereco_entrega.php');
     exit();
 }
 
@@ -41,6 +48,75 @@ $desconto = $total_compra - $total_com_desconto;
 // Gerar um ID único para esta transação PIX
 if (!isset($_SESSION['pix_transaction_id'])) {
     $_SESSION['pix_transaction_id'] = uniqid('pix_');
+}
+
+// Processar confirmação de pagamento
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirmar_pagamento'])) {
+    if (processarPedidoAposPagamento($con, 'pix')) {
+        // Limpar dados da sessão relacionados ao pedido atual
+        unset($_SESSION['carrinho']);
+        unset($_SESSION['produtos_carrinho']);
+        unset($_SESSION['endereco_entrega']);
+        unset($_SESSION['total_compra']);
+        unset($_SESSION['itens_carrinho']);
+        unset($_SESSION['metodo_pagamento']);
+        unset($_SESSION['pix_transaction_id']);
+        
+        // Retornar sucesso para o JavaScript
+        echo json_encode(['success' => true, 'message' => 'Pagamento confirmado com sucesso!']);
+        exit;
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Erro ao processar pedido.']);
+        exit;
+    }
+}
+
+function processarPedidoAposPagamento($db, $metodo_pagamento) {
+    try {
+        // Preparar endereço para salvar no banco
+        $endereco_entrega = $_SESSION['endereco_entrega'];
+        $endereco_completo = $endereco_entrega['logradouro'] . ', ' . $endereco_entrega['numero'];
+        if (!empty($endereco_entrega['complemento'])) {
+            $endereco_completo .= ' - ' . $endereco_entrega['complemento'];
+        }
+        $endereco_completo .= ' - ' . $endereco_entrega['bairro'] . ' - ' . $endereco_entrega['cidade'] . '/' . $endereco_entrega['estado'] . ' - CEP: ' . $endereco_entrega['cep'];
+        
+        // Inserir pedido no banco de dados
+        $stmt = $db->prepare("
+            INSERT INTO pedidos (usuario_id, data_pedido, total, status, metodo_pagamento, endereco_entrega) 
+            VALUES (?, NOW(), ?, 'pendente', ?, ?)
+        ");
+        
+        $stmt->execute([
+            $_SESSION['id'],
+            $_SESSION['total_compra'],
+            $metodo_pagamento,
+            $endereco_completo
+        ]);
+        
+        $pedido_id = $db->lastInsertId();
+        
+        // Inserir itens do pedido
+        foreach ($_SESSION['produtos_carrinho'] as $produto_id => $item) {
+            $stmt = $db->prepare("
+                INSERT INTO pedido_itens (pedido_id, produto_id, quantidade, preco_unitario, subtotal) 
+                VALUES (?, ?, ?, ?, ?)
+            ");
+            $stmt->execute([
+                $pedido_id,
+                $produto_id,
+                $item['quantidade'],
+                $item['produto']['preco'],
+                $item['subtotal']
+            ]);
+        }
+        
+        return $pedido_id;
+        
+    } catch(PDOException $e) {
+        error_log("Erro ao salvar pedido: " . $e->getMessage());
+        return false;
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -460,7 +536,7 @@ if (!isset($_SESSION['pix_transaction_id'])) {
             </div>
             
             <div class="btn-container">
-                <button class="btn" onclick="simulatePayment()">
+                <button class="btn" id="confirmPaymentBtn" onclick="simulatePayment()">
                     <i class="fas fa-check"></i> Confirmar Pagamento
                 </button>
                 <button class="btn btn-outline" onclick="window.location.href='paginaprodutos.php'">
@@ -489,6 +565,11 @@ if (!isset($_SESSION['pix_transaction_id'])) {
             } else {
                 document.getElementById('timer').innerHTML = '<i class="fas fa-exclamation-triangle"></i> Tempo esgotado! Por favor, inicie um novo pagamento.';
                 document.getElementById('timer').style.color = '#e74c3c';
+                
+                // Desabilitar botão de confirmação
+                document.getElementById('confirmPaymentBtn').disabled = true;
+                document.getElementById('confirmPaymentBtn').style.opacity = '0.6';
+                document.getElementById('confirmPaymentBtn').style.cursor = 'not-allowed';
                 
                 // Mostrar alerta SweetAlert2 quando o tempo esgotar
                 Swal.fire({
@@ -560,44 +641,66 @@ if (!isset($_SESSION['pix_transaction_id'])) {
                 title: 'Processando...',
                 text: 'Confirmando seu pagamento...',
                 icon: 'info',
-                timer: 2000,
-                timerProgressBar: true,
                 showConfirmButton: false,
+                allowOutsideClick: false,
                 didOpen: () => {
                     Swal.showLoading();
                 }
-            }).then(() => {
-                // Atualizar interface
-                document.getElementById('successMessage').style.display = 'block';
-                document.getElementById('timer').innerHTML = '<i class="fas fa-check-circle"></i> Pagamento confirmado!';
-                document.getElementById('timer').style.color = '#32b572';
+            });
+            
+            // Enviar requisição para o servidor
+            fetch('pagamento_pix.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'confirmar_pagamento=true'
+            })
+            .then(response => response.json())
+            .then(data => {
+                Swal.close();
                 
-                // Desabilitar botões após pagamento
-                document.querySelectorAll('.btn').forEach(btn => {
-                    btn.disabled = true;
-                    btn.style.opacity = '0.6';
-                    btn.style.cursor = 'not-allowed';
-                });
-                
-                // SweetAlert2 de sucesso
+                if (data.success) {
+                    // Atualizar interface
+                    document.getElementById('successMessage').style.display = 'block';
+                    document.getElementById('timer').innerHTML = '<i class="fas fa-check-circle"></i> Pagamento confirmado!';
+                    document.getElementById('timer').style.color = '#32b572';
+                    
+                    // Desabilitar botões após pagamento
+                    document.querySelectorAll('.btn').forEach(btn => {
+                        btn.disabled = true;
+                        btn.style.opacity = '0.6';
+                        btn.style.cursor = 'not-allowed';
+                    });
+                    
+                    // SweetAlert2 de sucesso
+                    Swal.fire({
+                        title: 'Pagamento Confirmado!',
+                        text: 'Obrigado pela sua compra! Seu pedido será processado.',
+                        icon: 'success',
+                        confirmButtonColor: '#32b572',
+                        confirmButtonText: 'Continuar'
+                    }).then(() => {
+                        // Redirecionar para página inicial
+                        window.location.href = 'index.php';
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Erro no Pagamento',
+                        text: data.message || 'Ocorreu um erro ao processar seu pagamento.',
+                        icon: 'error',
+                        confirmButtonColor: '#8b7355'
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.close();
+                console.error('Erro:', error);
                 Swal.fire({
-                    title: 'Pagamento Confirmado!',
-                    text: 'Obrigado pela sua compra! Seu pedido será processado.',
-                    icon: 'success',
-                    confirmButtonColor: '#32b572',
-                    confirmButtonText: 'Continuar'
-                }).then(() => {
-                    // Limpar carrinho após pagamento confirmado
-                    fetch('limpar_carrinho.php')
-                        .then(response => response.json())
-                        .then(data => {
-                            // Redirecionar para index.php após confirmação
-                            window.location.href = 'index.php';
-                        })
-                        .catch(error => {
-                            console.error('Erro ao limpar carrinho:', error);
-                            window.location.href = 'index.php';
-                        });
+                    title: 'Erro de Conexão',
+                    text: 'Não foi possível processar o pagamento. Tente novamente.',
+                    icon: 'error',
+                    confirmButtonColor: '#8b7355'
                 });
             });
         }
