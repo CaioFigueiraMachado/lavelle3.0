@@ -14,7 +14,7 @@ if (!isset($usuarioLogado)) {
 <header>
         <div class="container">
             <div class="header-top">
-                <div class="logo"><?php echo $empresa ?? 'LAVELLE'; ?></div>
+                <div class="logo" href=""><?php echo $empresa ?? 'LAVELLE'; ?></div>
                 <nav>
                     <ul>
                         <li><a href="index.php">INÍCIO</a></li>

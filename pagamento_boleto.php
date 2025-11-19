@@ -14,6 +14,10 @@ if (isset($_SESSION['total_compra'])) {
 
 // Gerar data de vencimento (2 dias úteis a partir de hoje)
 $vencimento = date('d/m/Y', strtotime('+2 weekdays'));
+
+// Gerar código do boleto (simulação)
+$codigo_barras = '34191.79001 01043.510047 91020.150008 8 884100000' . str_pad(number_format($total_compra, 2, '', ''), 11, '0', STR_PAD_LEFT);
+$linha_digitavel = '34198884100000' . str_pad(number_format($total_compra, 2, '', ''), 11, '0', STR_PAD_LEFT) . '91790010104351004791020150008';
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -179,6 +183,12 @@ $vencimento = date('d/m/Y', strtotime('+2 weekdays'));
             padding: 10px;
             background: #f8f9fa;
             border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .boleto-line:hover {
+            background: #e9ecef;
         }
         
         .barcode-section {
@@ -245,6 +255,7 @@ $vencimento = date('d/m/Y', strtotime('+2 weekdays'));
             justify-content: center;
             flex: 1;
             min-width: 180px;
+            text-decoration: none;
         }
         
         .btn i {
@@ -268,6 +279,14 @@ $vencimento = date('d/m/Y', strtotime('+2 weekdays'));
             color: white;
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(139, 115, 85, 0.2);
+        }
+        
+        .btn-download {
+            background: #8b7355;
+        }
+        
+        .btn-download:hover {
+            background: #7a6347;
         }
         
         .instructions {
@@ -395,14 +414,14 @@ $vencimento = date('d/m/Y', strtotime('+2 weekdays'));
                     <div class="boleto-title">BOLETO BANCÁRIO</div>
                 </div>
                 
-                <div class="boleto-line">
-                    34191.79001 01043.510047 91020.150008 8 884100000<?php echo number_format($total_compra, 2, '', ''); ?>
+                <div class="boleto-line" onclick="copyToClipboard('<?php echo $codigo_barras; ?>', 'Linha digitável')">
+                    <?php echo $codigo_barras; ?>
                 </div>
                 
                 <div class="barcode-section">
                     <div class="barcode-label">Código de barras</div>
-                    <div class="boleto-line" style="font-size: 14px; background: white;">
-                        34198884100000<?php echo number_format($total_compra, 2, '', ''); ?>91790010104351004791020150008
+                    <div class="boleto-line" onclick="copyToClipboard('<?php echo $linha_digitavel; ?>', 'Código de barras')">
+                        <?php echo $linha_digitavel; ?>
                     </div>
                 </div>
             </div>
@@ -427,21 +446,21 @@ $vencimento = date('d/m/Y', strtotime('+2 weekdays'));
             </div>
             
             <div class="btn-container">
-                <button class="btn" onclick="printBoleto()">
-                    <i class="fas fa-print"></i> Imprimir Boleto
+                <button class="btn btn-download" onclick="downloadBoleto()">
+                    <i class="fas fa-download"></i> Baixar Boleto PDF
                 </button>
-                <button class="btn" onclick="copyBarcode()">
+                <button class="btn" onclick="copyToClipboard('<?php echo $codigo_barras; ?>', 'Linha digitável')">
                     <i class="far fa-copy"></i> Copiar Código
                 </button>
-                <button class="btn" onclick="simulatePayment()">
-                    <i class="fas fa-check"></i> Confirmar Pagamento
+                <button class="btn" onclick="finalizarCompra()">
+                    <i class="fas fa-check"></i> Compra Finalizada
                 </button>
             </div>
             
             <div class="instructions">
                 <h3><i class="fas fa-info-circle"></i> Como pagar:</h3>
                 <ol>
-                    <li>Imprima o boleto ou copie o código de barras</li>
+                    <li>Baixe o boleto em PDF ou copie o código</li>
                     <li>Pague em qualquer banco, lotérica ou internet banking</li>
                     <li>Guarde o comprovante de pagamento</li>
                     <li>Seu pedido será processado após a confirmação do pagamento</li>
@@ -453,9 +472,12 @@ $vencimento = date('d/m/Y', strtotime('+2 weekdays'));
             </div>
             
             <div class="btn-container">
-                <button class="btn btn-outline" onclick="window.location.href='paginaprodutos.php'">
+                <a href="paginaprodutos.php" class="btn btn-outline">
                     <i class="fas fa-arrow-left"></i> Voltar aos Produtos
-                </button>
+                </a>
+                <a href="index.php" class="btn btn-outline">
+                    <i class="fas fa-home"></i> Página Inicial
+                </a>
             </div>
         </div>
     </div>
@@ -467,160 +489,159 @@ $vencimento = date('d/m/Y', strtotime('+2 weekdays'));
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
     <script>
-        function printBoleto() {
-            // Feedback visual
-            const printBtn = document.querySelector('.btn:nth-child(1)');
-            const originalText = printBtn.innerHTML;
-            printBtn.innerHTML = '<i class="fas fa-check"></i> Boleto Impresso!';
-            printBtn.style.background = '#32b572';
-            
-            // SweetAlert2 para confirmação de impressão
-            Swal.fire({
-                title: 'Boleto Impresso!',
-                text: 'Em um ambiente real, esta função abriria o boleto em PDF.',
-                icon: 'success',
-                confirmButtonText: 'OK',
-                confirmButtonColor: '#32b572'
-            }).then(() => {
-                printBtn.innerHTML = originalText;
-                printBtn.style.background = '';
-            });
-        }
-        
-        function copyBarcode() {
-            const barcode = '34198884100000<?php echo number_format($total_compra, 2, '', ''); ?>91790010104351004791020150008';
-            navigator.clipboard.writeText(barcode).then(() => {
-                // Feedback visual
-                const copyBtn = document.querySelector('.btn:nth-child(2)');
-                const originalText = copyBtn.innerHTML;
-                copyBtn.innerHTML = '<i class="fas fa-check"></i> Código Copiado!';
-                copyBtn.style.background = '#32b572';
-                
-                // SweetAlert2 para confirmação de cópia
+        // Função para copiar texto para a área de transferência
+        function copyToClipboard(text, type) {
+            navigator.clipboard.writeText(text).then(() => {
                 Swal.fire({
-                    title: 'Código Copiado!',
-                    text: 'O código de barras foi copiado para a área de transferência.',
+                    title: 'Copiado!',
+                    text: `${type} copiado para a área de transferência.`,
                     icon: 'success',
                     timer: 2000,
                     showConfirmButton: false
-                }).then(() => {
-                    copyBtn.innerHTML = originalText;
-                    copyBtn.style.background = '';
                 });
-                
-                setTimeout(() => {
-                    copyBtn.innerHTML = originalText;
-                    copyBtn.style.background = '';
-                }, 2000);
             }).catch(err => {
                 Swal.fire({
                     title: 'Erro',
-                    text: 'Erro ao copiar o código. Tente novamente.',
+                    text: 'Erro ao copiar. Tente novamente.',
                     icon: 'error',
                     confirmButtonText: 'OK'
                 });
             });
         }
-        
-        function simulatePayment() {
-            // SweetAlert2 para confirmação de pagamento
+
+        // Função para baixar boleto (simulação)
+        function downloadBoleto() {
             Swal.fire({
-                title: 'Confirmar Pagamento?',
-                text: `Você está prestes a confirmar o pagamento de R$ <?php echo number_format($total_compra, 2, ',', '.'); ?>`,
-                icon: 'question',
+                title: 'Baixar Boleto',
+                text: 'Em um ambiente real, esta função baixaria o boleto em PDF.',
+                icon: 'info',
                 showCancelButton: true,
-                confirmButtonText: 'Sim, Confirmar Pagamento',
+                confirmButtonText: 'Simular Download',
                 cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#32b572',
-                cancelButtonColor: '#d33'
+                confirmButtonColor: '#8b7355'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Mostrar mensagem de sucesso
-                    document.getElementById('successMessage').style.display = 'flex';
+                    // Simular download
+                    const downloadBtn = document.querySelector('.btn-download');
+                    const originalText = downloadBtn.innerHTML;
+                    downloadBtn.innerHTML = '<i class="fas fa-check"></i> PDF Baixado!';
+                    downloadBtn.style.background = '#32b572';
                     
-                    // Desabilitar botões após pagamento
-                    document.querySelectorAll('.btn').forEach(btn => {
-                        if (!btn.classList.contains('btn-outline')) {
-                            btn.disabled = true;
-                            btn.style.opacity = '0.6';
-                            btn.style.cursor = 'not-allowed';
-                        }
-                    });
-                    
-                    // SweetAlert2 de sucesso
                     Swal.fire({
-                        title: 'Pagamento Confirmado!',
-                        text: 'Obrigado pela preferência. Você será redirecionado para a página inicial.',
+                        title: 'Boleto Baixado!',
+                        text: 'O boleto foi simulado com sucesso.',
                         icon: 'success',
-                        confirmButtonText: 'OK',
-                        confirmButtonColor: '#32b572',
-                        timer: 3000,
-                        timerProgressBar: true
+                        timer: 2000,
+                        showConfirmButton: false
                     }).then(() => {
-                        // Redirecionar para index.php
-                        window.location.href = 'index.php';
+                        downloadBtn.innerHTML = originalText;
+                        downloadBtn.style.background = '#8b7355';
                     });
                     
-                    // Redirecionar automaticamente após 3 segundos
                     setTimeout(() => {
-                        window.location.href = 'index.php';
-                    }, 3000);
+                        downloadBtn.innerHTML = originalText;
+                        downloadBtn.style.background = '#8b7355';
+                    }, 2000);
                 }
             });
         }
-        // Após o pagamento ser confirmado, adicione:
-function processarPedidoAposPagamento($db, $metodo_pagamento) {
-    try {
-        // Inserir pedido no banco de dados
-        $stmt = $db->prepare("
-            INSERT INTO pedidos (usuario_id, data_pedido, total, status, metodo_pagamento, endereco_entrega) 
-            VALUES (?, NOW(), ?, 'pendente', ?, ?)
-        ");
-        
-        $stmt->execute([
-            $_SESSION['id'],
-            $_SESSION['total_compra'],
-            $metodo_pagamento,
-            $_SESSION['endereco_entrega']
-        ]);
-        
-        $pedido_id = $db->lastInsertId();
-        
-        // Inserir itens do pedido
-        foreach ($_SESSION['produtos_carrinho'] as $produto_id => $item) {
-            $stmt = $db->prepare("
-                INSERT INTO pedido_itens (pedido_id, produto_id, quantidade, preco_unitario, subtotal) 
-                VALUES (?, ?, ?, ?, ?)
-            ");
-            $stmt->execute([
-                $pedido_id,
-                $produto_id,
-                $item['quantidade'],
-                $item['produto']['preco'],
-                $item['subtotal']
-            ]);
+
+        // Função para finalizar compra
+        function finalizarCompra() {
+            Swal.fire({
+                title: 'Finalizar Compra',
+                html: `
+                    <div style="text-align: left;">
+                        <p><strong>Resumo do Pedido:</strong></p>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                            <p><strong>Valor:</strong> R$ <?php echo number_format($total_compra, 2, ',', '.'); ?></p>
+                            <p><strong>Método:</strong> Boleto Bancário</p>
+                            <p><strong>Vencimento:</strong> <?php echo $vencimento; ?></p>
+                        </div>
+                        <p style="color: #666; font-size: 14px;">
+                            <i class="fas fa-info-circle"></i> 
+                            Seu pedido será processado após a confirmação do pagamento.
+                        </p>
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Confirmar Compra',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#32b572',
+                cancelButtonColor: '#d33',
+                width: '500px'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Mostrar loading
+                    Swal.fire({
+                        title: 'Processando...',
+                        text: 'Finalizando sua compra',
+                        icon: 'info',
+                        showConfirmButton: false,
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    // Simular processamento
+                    setTimeout(() => {
+                        Swal.fire({
+                            title: 'Compra Finalizada!',
+                            html: `
+                                <div style="text-align: center;">
+                                    <i class="fas fa-check-circle" style="font-size: 48px; color: #32b572; margin-bottom: 20px;"></i>
+                                    <p><strong>Seu pedido foi registrado com sucesso!</strong></p>
+                                    <p style="color: #666; margin: 10px 0;">
+                                        Boleto gerado: <strong><?php echo $codigo_barras; ?></strong>
+                                    </p>
+                                    <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                                        <p style="margin: 5px 0;">📧 Você receberá um e-mail com os detalhes</p>
+                                        <p style="margin: 5px 0;">📦 Seu pedido será enviado após a confirmação do pagamento</p>
+                                    </div>
+                                </div>
+                            `,
+                            icon: 'success',
+                            confirmButtonText: 'Ir para Meus Pedidos',
+                            confirmButtonColor: '#8b7355'
+                        }).then(() => {
+                            // Redirecionar para a página de pedidos ou perfil
+                            window.location.href = 'perfil.php?tab=pedidos';
+                        });
+                    }, 2000);
+                }
+            });
         }
-        
-        // Gerar comprovante automaticamente
-        require_once 'receipt_generator.php';
-        $receiptGenerator = new ReceiptGenerator();
-        $filename = $receiptGenerator->generateReceipt($pedido_id, $db);
-        
-        // Limpar carrinho
-        unset($_SESSION['carrinho']);
-        unset($_SESSION['produtos_carrinho']);
-        unset($_SESSION['endereco_entrega']);
-        unset($_SESSION['total_compra']);
-        unset($_SESSION['itens_carrinho']);
-        unset($_SESSION['metodo_pagamento']);
-        
-        return $pedido_id;
-        
-    } catch(PDOException $e) {
-        error_log("Erro ao salvar pedido: " . $e->getMessage());
-        return false;
-    }
-}
+
+        // Adicionar evento de clique nas linhas do boleto para copiar
+        document.addEventListener('DOMContentLoaded', function() {
+            const boletoLines = document.querySelectorAll('.boleto-line');
+            boletoLines.forEach(line => {
+                line.style.cursor = 'pointer';
+                line.title = 'Clique para copiar';
+            });
+        });
+
+        // Função para imprimir boleto (opcional)
+        function printBoleto() {
+            const printContent = document.querySelector('.boleto-preview').innerHTML;
+            const originalContent = document.body.innerHTML;
+            
+            document.body.innerHTML = `
+                <div style="padding: 20px; font-family: Arial, sans-serif;">
+                    <h2 style="text-align: center; color: #000;">Boleto - LAVELLE</h2>
+                    ${printContent}
+                    <div style="text-align: center; margin-top: 20px; color: #666;">
+                        <p>Impresso em: ${new Date().toLocaleDateString('pt-BR')}</p>
+                    </div>
+                </div>
+            `;
+            
+            window.print();
+            document.body.innerHTML = originalContent;
+            window.location.reload();
+        }
     </script>
 </body>
 </html>

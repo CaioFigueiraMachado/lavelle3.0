@@ -72,6 +72,47 @@ if (!file_exists($upload_dir)) {
     mkdir($upload_dir, 0777, true);
 }
 
+// Processar visualização do comprovante via AJAX
+if (isset($_GET['action']) && $_GET['action'] == 'get_comprovante' && isset($_GET['pedido_id'])) {
+    $pedido_id = $_GET['pedido_id'];
+    
+    // Verificar se o pedido pertence ao usuário
+    $sql_comprovante = "SELECT p.*, u.nome, u.email, u.telefone, u.endereco, u.cidade, u.estado, u.cep 
+                       FROM pedidos p 
+                       INNER JOIN usuarios u ON p.usuario_id = u.id 
+                       WHERE p.id = ? AND p.usuario_id = ?";
+    $stmt_comprovante = $con->prepare($sql_comprovante);
+    $stmt_comprovante->execute([$pedido_id, $usuario_id]);
+    $pedido_comprovante = $stmt_comprovante->fetch(PDO::FETCH_ASSOC);
+    
+    if ($pedido_comprovante) {
+        // Buscar itens do pedido
+        $sql_itens = "SELECT pi.*, p.nome, p.imagem, p.descricao 
+                     FROM pedido_itens pi 
+                     INNER JOIN produtos p ON pi.produto_id = p.id 
+                     WHERE pi.pedido_id = ?";
+        $stmt_itens = $con->prepare($sql_itens);
+        $stmt_itens->execute([$pedido_id]);
+        $itens_pedido = $stmt_itens->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Retornar dados em JSON
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => true,
+            'pedido' => $pedido_comprovante,
+            'itens' => $itens_pedido
+        ]);
+        exit();
+    } else {
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => false,
+            'message' => 'Pedido não encontrado'
+        ]);
+        exit();
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Atualizar dados básicos
     if (isset($_POST['nome'])) {
@@ -554,6 +595,11 @@ if ($coluna_existe) {
             color: white;
         }
 
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
         .profile-actions {
             display: flex;
             gap: 15px;
@@ -633,6 +679,12 @@ if ($coluna_existe) {
             font-size: 16px;
         }
 
+        .pedido-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
         .favoritos-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -679,6 +731,145 @@ if ($coluna_existe) {
             font-size: 48px;
             margin-bottom: 20px;
             color: #ddd;
+        }
+
+        /* Modal do Comprovante */
+        .comprovante-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .comprovante-content {
+            background: white;
+            margin: 50px auto;
+            max-width: 800px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .comprovante-header {
+            background: #8b7355;
+            color: white;
+            padding: 25px 30px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .comprovante-header h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .comprovante-body {
+            padding: 30px;
+        }
+
+        .comprovante-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .comprovante-section {
+            margin-bottom: 25px;
+        }
+
+        .comprovante-section h3 {
+            color: #8b7355;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .itens-pedido {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+        }
+
+        .itens-pedido th {
+            background: #f9f5f0;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #8b7355;
+        }
+
+        .itens-pedido td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .item-produto {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .item-imagem {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+
+        .total-pedido {
+            background: #f9f5f0;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: right;
+            font-size: 18px;
+            font-weight: bold;
+            color: #8b7355;
+        }
+
+        .comprovante-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .loading i {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #8b7355;
+        }
+        
+        .comprovante-observacoes {
+            background: #f9f5f0;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid #8b7355;
         }
 
         /* Footer - Igual ao index.php */
@@ -814,6 +1005,19 @@ if ($coluna_existe) {
             .favoritos-grid {
                 grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             }
+
+            .comprovante-content {
+                margin: 20px;
+                width: calc(100% - 40px);
+            }
+
+            .comprovante-info {
+                grid-template-columns: 1fr;
+            }
+
+            .pedido-actions {
+                flex-direction: column;
+            }
         }
 
         @media (max-width: 480px) {
@@ -911,7 +1115,8 @@ if ($coluna_existe) {
                 <!-- Abas de navegação -->
                 <div class="profile-tabs">
                     <button class="profile-tab active" data-tab="perfil">Perfil</button>
-                   
+                    <button class="profile-tab" data-tab="pedidos">Meus Pedidos</button>
+                    
                     <button class="profile-tab" data-tab="seguranca">Segurança</button>
                 </div>
                 
@@ -1051,7 +1256,7 @@ if ($coluna_existe) {
                     </div>
                 </div>
                 
-                <!-- Aba de Pedidos - VERSÃO CORRIGIDA -->
+                <!-- Aba de Pedidos - VERSÃO ATUALIZADA COM COMPROVANTE REAL -->
                 <div class="tab-content" id="tab-pedidos">
                     <div class="profile-form-container">
                         <h3>Meus Pedidos Recentes</h3>
@@ -1079,12 +1284,12 @@ if ($coluna_existe) {
                                             <div class="pedido-valor">
                                                 <strong>Status:</strong> <?php echo $pedido['status']; ?>
                                             </div>
-                                            <?php if (!empty($pedido['endereco_entrega'])): ?>
-                                            <div style="grid-column: 1 / -1; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(139, 115, 85, 0.1); background: rgba(139, 115, 85, 0.03); padding: 15px; border-radius: 8px;">
-                                                <strong style="color: #8b7355;">Endereço de Entrega:</strong><br>
-                                                <?php echo nl2br(htmlspecialchars($pedido['endereco_entrega'])); ?>
-                                            </div>
-                                            <?php endif; ?>
+                                        </div>
+                                        <div class="pedido-actions">
+                                            <button class="btn btn-small" onclick="verComprovanteReal(<?php echo $pedido['id']; ?>)">
+                                                <i class="fas fa-receipt"></i> Ver Comprovante
+                                            </button>
+                                           
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
@@ -1178,6 +1383,22 @@ if ($coluna_existe) {
         </div>
     </section>
     
+    <!-- Modal do Comprovante -->
+    <div id="comprovanteModal" class="comprovante-modal">
+        <div class="comprovante-content">
+            <div class="comprovante-header">
+                <h2><i class="fas fa-receipt"></i> Comprovante de Pedido</h2>
+                <button class="close-modal" onclick="fecharComprovante()">&times;</button>
+            </div>
+            <div class="comprovante-body" id="comprovanteBody">
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Carregando comprovante...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <footer>
        <?php include 'footer.php';?>
     </footer>
@@ -1241,6 +1462,192 @@ if ($coluna_existe) {
                 value = value.substring(0,10) + '-' + value.substring(10,14);
             }
             e.target.value = value;
+        });
+
+        // Função para buscar comprovante REAL do banco de dados
+        function verComprovanteReal(pedidoId) {
+            const comprovanteBody = document.getElementById('comprovanteBody');
+            comprovanteBody.innerHTML = `
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Carregando comprovante...</p>
+                </div>
+            `;
+            
+            document.getElementById('comprovanteModal').style.display = 'block';
+            
+            // Fazer requisição AJAX para buscar dados REAIS do pedido
+            fetch(`perfil.php?action=get_comprovante&pedido_id=${pedidoId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        exibirComprovanteReal(data.pedido, data.itens);
+                    } else {
+                        comprovanteBody.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h3>Erro ao carregar comprovante</h3>
+                                <p>${data.message}</p>
+                                <button class="btn" onclick="fecharComprovante()">Fechar</button>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    comprovanteBody.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h3>Erro ao carregar comprovante</h3>
+                            <p>Ocorreu um erro ao buscar os dados do pedido.</p>
+                            <button class="btn" onclick="fecharComprovante()">Fechar</button>
+                        </div>
+                    `;
+                });
+        }
+
+        function exibirComprovanteReal(pedido, itens) {
+            const comprovanteBody = document.getElementById('comprovanteBody');
+            const dataPedido = new Date(pedido.data_pedido).toLocaleDateString('pt-BR');
+            const horaPedido = new Date(pedido.data_pedido).toLocaleTimeString('pt-BR');
+            
+            // Calcular totais
+            const subtotal = parseFloat(pedido.total) - parseFloat(pedido.frete || 0);
+            
+            let itensHTML = '';
+            if (itens && itens.length > 0) {
+                itens.forEach(item => {
+                    itensHTML += `
+                        <tr>
+                            <td>
+                                <div class="item-produto">
+                                    <img src="${item.imagem || 'images/produto-placeholder.jpg'}" alt="${item.nome}" class="item-imagem">
+                                    <div>
+                                        <strong>${item.nome}</strong><br>
+                                        <small>${item.descricao || 'Produto'}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>${item.quantidade}</td>
+                            <td>R$ ${parseFloat(item.preco_unitario).toFixed(2).replace('.', ',')}</td>
+                            <td>R$ ${(parseFloat(item.preco_unitario) * parseInt(item.quantidade)).toFixed(2).replace('.', ',')}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                itensHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #666;">
+                            <i class="fas fa-info-circle"></i> Nenhum item encontrado para este pedido
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            comprovanteBody.innerHTML = `
+                <div class="comprovante-info">
+                    <div>
+                        <strong>Nº do Pedido:</strong> #${pedido.id}<br>
+                        <strong>Data do Pedido:</strong> ${dataPedido} às ${horaPedido}<br>
+                        <strong>Status:</strong> <span class="pedido-status status-${pedido.status ? pedido.status.toLowerCase() : 'pendente'}">${pedido.status || 'Pendente'}</span>
+                    </div>
+                    <div>
+                        <strong>Método de Pagamento:</strong> ${pedido.metodo_pagamento || 'Não informado'}<br>
+                        <strong>Valor Total:</strong> R$ ${parseFloat(pedido.total).toFixed(2).replace('.', ',')}<br>
+                        <strong>Código de Rastreio:</strong> ${pedido.codigo_rastreio || 'Aguardando postagem'}
+                    </div>
+                </div>
+
+                <div class="comprovante-section">
+                    <h3><i class="fas fa-user"></i> Dados do Cliente</h3>
+                    <p>
+                        <strong>Nome:</strong> ${pedido.nome}<br>
+                        <strong>E-mail:</strong> ${pedido.email}<br>
+                        <strong>Telefone:</strong> ${pedido.telefone || 'Não informado'}
+                    </p>
+                </div>
+
+                <div class="comprovante-section">
+                    <h3><i class="fas fa-truck"></i> Endereço de Entrega</h3>
+                    <p>
+                        ${pedido.endereco || 'Endereço não informado'}<br>
+                        ${pedido.cidade || ''} - ${pedido.estado || ''}<br>
+                        CEP: ${pedido.cep || ''}
+                    </p>
+                </div>
+
+                <div class="comprovante-section">
+                    <h3><i class="fas fa-box"></i> Itens do Pedido</h3>
+                    <table class="itens-pedido">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Quantidade</th>
+                                <th>Preço Unit.</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itensHTML}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="comprovante-section">
+                    <h3><i class="fas fa-receipt"></i> Resumo do Pedido</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <strong>Subtotal:</strong> R$ ${subtotal.toFixed(2).replace('.', ',')}<br>
+                            <strong>Frete:</strong> R$ ${parseFloat(pedido.frete || 0).toFixed(2).replace('.', ',')}<br>
+                            <strong>Desconto:</strong> R$ ${parseFloat(pedido.desconto || 0).toFixed(2).replace('.', ',')}
+                        </div>
+                        <div class="total-pedido">
+                            <strong>TOTAL: R$ ${parseFloat(pedido.total).toFixed(2).replace('.', ',')}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                ${pedido.observacoes ? `
+                <div class="comprovante-observacoes">
+                    <h3><i class="fas fa-sticky-note"></i> Observações</h3>
+                    <p>${pedido.observacoes}</p>
+                </div>
+                ` : ''}
+
+                <div class="comprovante-actions">
+                    <button class="btn" onclick="imprimirComprovante()">
+                        <i class="fas fa-print"></i> Imprimir Comprovante
+                    </button>
+                    <button class="btn btn-outline" onclick="fecharComprovante()">
+                        <i class="fas fa-times"></i> Fechar
+                    </button>
+                </div>
+            `;
+        }
+
+        function verDetalhesPedido(pedidoId) {
+            Swal.fire({
+                title: 'Detalhes do Pedido',
+                html: `Carregando detalhes do pedido #${pedidoId}...`,
+                icon: 'info',
+                confirmButtonText: 'Fechar'
+            });
+        }
+
+        function fecharComprovante() {
+            document.getElementById('comprovanteModal').style.display = 'none';
+        }
+
+        function imprimirComprovante() {
+            window.print();
+        }
+
+        // Fechar modal ao clicar fora
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('comprovanteModal');
+            if (event.target === modal) {
+                fecharComprovante();
+            }
         });
     </script>
 </body>

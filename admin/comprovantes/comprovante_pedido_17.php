@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comprovante do Pedido #012</title>
+    <title>Comprovante do Pedido #017</title>
     <style>
         * {
             margin: 0;
@@ -166,9 +166,9 @@
     <div class="comprovante">
         <div class="header">
             <h1> COMPROVANTE DE PEDIDO</h1>
-            <div class="numero-pedido">Pedido #012</div>
-            <div class="status-badge status-entregue">
-                Entregue            </div>
+            <div class="numero-pedido">Pedido #017</div>
+            <div class="status-badge status-pendente">
+                Pendente            </div>
         </div>
 
         <div class="info-grid">
@@ -176,7 +176,7 @@
                 <h2> Informações do Pedido</h2>
                 <div class="info-item">
                     <div class="info-label">Data do Pedido:</div>
-                    <div class="info-value">17/11/2025 16:09</div>
+                    <div class="info-value">19/11/2025 17:19</div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">Método de Pagamento:</div>
@@ -184,8 +184,8 @@
                 </div>
                 <div class="info-item">
                     <div class="info-label">Status:</div>
-                    <div class="info-value status-badge status-entregue">
-                        Entregue                    </div>
+                    <div class="info-value status-badge status-pendente">
+                        Pendente                    </div>
                 </div>
             </div>
 
@@ -205,7 +205,7 @@
                 </div>
                 <div class="info-item">
                     <div class="info-label">Endereço:</div>
-                    <div class="info-value">Rua Essio Lanfredi, 11 - Parque Residencial Maria Elmira</div>
+                    <div class="info-value">Rua Essio Lanfredi, 12 - Parque Residencial Maria Elmira</div>
                 </div>
             </div>
         </div>
@@ -223,10 +223,10 @@
                 </thead>
                 <tbody>
                                         <tr>
-                        <td>Lavelle Doce Encanto</td>
+                        <td>Lavelle Sedução Dourada</td>
                         <td>1</td>
-                        <td>R$ 289,99</td>
-                        <td>R$ 289,99</td>
+                        <td>R$ 399,99</td>
+                        <td>R$ 399,99</td>
                     </tr>
                                     </tbody>
             </table>
@@ -234,7 +234,7 @@
 
         <div class="total-section">
             <div class="total-line">
-                <strong>Total do Pedido: R$ 289,99</strong>
+                <strong>Total do Pedido: R$ 399,99</strong>
             </div>
         </div>
 
@@ -244,7 +244,7 @@
         </div>
 
         <div class="footer">
-            <p>Comprovante gerado automaticamente em 19/11/2025 às 20:56</p>
+            <p>Comprovante gerado automaticamente em 19/11/2025 às 21:19</p>
             <p>Obrigado pela preferência! </p>
         </div>
     </div>

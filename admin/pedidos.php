@@ -984,6 +984,7 @@ include 'includes/sidebar.php';
 }
 </style>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 function atualizarStatus(select) {
     const novoStatus = select.value;
@@ -1005,18 +1006,64 @@ function atualizarStatus(select) {
 }
 
 function confirmarExclusao(pedidoId) {
-    const confirmed = confirm(`⚠️ Confirmação de Exclusão\n\nTem certeza que deseja excluir o pedido #${pedidoId}?\n\nEsta ação é irreversível e todos os dados associados serão permanentemente removidos.`);
-    
-    if (confirmed) {
-        window.location.href = `?excluir_pedido=${pedidoId}`;
-    }
+    Swal.fire({
+        title: '⚠️ Confirmação de Exclusão',
+        html: `<strong>Tem certeza que deseja excluir o pedido #${pedidoId}?</strong><br><br>
+              <div style="text-align: left; background: #fff3f3; padding: 12px; border-radius: 8px; border-left: 4px solid #dc3545;">
+                <i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i>
+                <strong style="color: #721c24;">Atenção:</strong>
+                <ul style="margin: 8px 0 0 0; padding-left: 20px; color: #721c24;">
+                    <li>Esta ação é <strong>IRREVERSÍVEL</strong></li>
+                    <li>Todos os dados do pedido serão permanentemente removidos</li>
+                    <li>Itens do pedido também serão excluídos</li>
+                    <li>Comprovantes associados serão removidos</li>
+                </ul>
+              </div>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sim, excluir pedido!',
+        cancelButtonText: 'Cancelar',
+        customClass: {
+            popup: 'sweetalert-custom',
+            confirmButton: 'sweetalert-confirm-delete',
+            cancelButton: 'sweetalert-cancel'
+        },
+        buttonsStyling: true,
+        reverseButtons: true,
+        focusCancel: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Mostrar loading
+            Swal.fire({
+                title: 'Excluindo pedido...',
+                text: 'Aguarde enquanto removemos o pedido do sistema',
+                icon: 'info',
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // Redirecionar para exclusão
+            window.location.href = `?excluir_pedido=${pedidoId}`;
+        }
+    });
     
     return false;
 }
 
 function exportarDados() {
     // Simulação de exportação - pode ser implementada posteriormente
-    alert('Funcionalidade de exportação será implementada em breve!');
+    Swal.fire({
+        title: 'Exportar Dados',
+        text: 'Funcionalidade de exportação será implementada em breve!',
+        icon: 'info',
+        confirmButtonText: 'Entendi',
+        confirmButtonColor: '#8b7355'
+    });
 }
 
 // Inicialização
@@ -1050,6 +1097,41 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Estilos customizados para o SweetAlert2
+const style = document.createElement('style');
+style.textContent = `
+    .sweetalert-custom {
+        border-radius: 12px;
+        border: 2px solid #e9ecef;
+    }
+    .sweetalert-confirm-delete {
+        background: #dc3545 !important;
+        border: none !important;
+        padding: 10px 25px !important;
+        border-radius: 6px !important;
+        font-weight: 600 !important;
+    }
+    .sweetalert-confirm-delete:hover {
+        background: #c82333 !important;
+        transform: translateY(-1px);
+    }
+    .sweetalert-cancel {
+        background: #6c757d !important;
+        border: none !important;
+        padding: 10px 25px !important;
+        border-radius: 6px !important;
+        font-weight: 600 !important;
+    }
+    .sweetalert-cancel:hover {
+        background: #5a6268 !important;
+        transform: translateY(-1px);
+    }
+    .swal2-popup {
+        font-size: 16px !important;
+    }
+`;
+document.head.appendChild(style);
 </script>
 
 <?php include 'includes/footer.php'; ?>

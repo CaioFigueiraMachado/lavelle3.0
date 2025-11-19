@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comprovante do Pedido #012</title>
+    <title>Comprovante do Pedido #014</title>
     <style>
         * {
             margin: 0;
@@ -166,9 +166,9 @@
     <div class="comprovante">
         <div class="header">
             <h1> COMPROVANTE DE PEDIDO</h1>
-            <div class="numero-pedido">Pedido #012</div>
-            <div class="status-badge status-entregue">
-                Entregue            </div>
+            <div class="numero-pedido">Pedido #014</div>
+            <div class="status-badge status-pendente">
+                Pendente            </div>
         </div>
 
         <div class="info-grid">
@@ -176,7 +176,7 @@
                 <h2> Informações do Pedido</h2>
                 <div class="info-item">
                     <div class="info-label">Data do Pedido:</div>
-                    <div class="info-value">17/11/2025 16:09</div>
+                    <div class="info-value">18/11/2025 14:55</div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">Método de Pagamento:</div>
@@ -184,8 +184,8 @@
                 </div>
                 <div class="info-item">
                     <div class="info-label">Status:</div>
-                    <div class="info-value status-badge status-entregue">
-                        Entregue                    </div>
+                    <div class="info-value status-badge status-pendente">
+                        Pendente                    </div>
                 </div>
             </div>
 
@@ -193,19 +193,19 @@
                 <h2> Dados do Cliente</h2>
                 <div class="info-item">
                     <div class="info-label">Nome:</div>
-                    <div class="info-value">ADM LAVELLE PERFUMES</div>
+                    <div class="info-value">Caio Machado</div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">Email:</div>
-                    <div class="info-value">admlavelle@gmail.com</div>
+                    <div class="info-value">adm@gmail.com</div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">Telefone:</div>
-                    <div class="info-value">(12) 99733-3349</div>
+                    <div class="info-value"></div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">Endereço:</div>
-                    <div class="info-value">Rua Essio Lanfredi, 11 - Parque Residencial Maria Elmira</div>
+                    <div class="info-value">Rua Essio Lanfredi, 530 - Parque Residencial Maria Elmira</div>
                 </div>
             </div>
         </div>
@@ -228,13 +228,19 @@
                         <td>R$ 289,99</td>
                         <td>R$ 289,99</td>
                     </tr>
+                                        <tr>
+                        <td>Lavelle Sedução Dourada</td>
+                        <td>1</td>
+                        <td>R$ 399,99</td>
+                        <td>R$ 399,99</td>
+                    </tr>
                                     </tbody>
             </table>
         </div>
 
         <div class="total-section">
             <div class="total-line">
-                <strong>Total do Pedido: R$ 289,99</strong>
+                <strong>Total do Pedido: R$ 689,98</strong>
             </div>
         </div>
 
@@ -244,7 +250,7 @@
         </div>
 
         <div class="footer">
-            <p>Comprovante gerado automaticamente em 19/11/2025 às 20:56</p>
+            <p>Comprovante gerado automaticamente em 18/11/2025 às 18:57</p>
             <p>Obrigado pela preferência! </p>
         </div>
     </div>
