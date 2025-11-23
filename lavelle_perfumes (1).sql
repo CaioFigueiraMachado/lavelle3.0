@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 19-Nov-2025 às 21:21
+-- Tempo de geração: 23-Nov-2025 às 19:53
 -- Versão do servidor: 10.4.32-MariaDB
 -- versão do PHP: 8.2.12
 
@@ -48,7 +48,8 @@ INSERT INTO `pedidos` (`id`, `usuario_id`, `data_pedido`, `total`, `status`, `me
 (13, 2, '2025-11-17 16:24:32', 399.99, 'confirmado', 'pix', 'Rua Essio Lanfredi, 1 - Parque Residencial Maria Elmira - Caçapava/SP - CEP: 12285-010', '2025-11-17 19:24:32'),
 (14, 1, '2025-11-18 14:55:47', 689.98, 'cancelado', 'pix', 'Rua Essio Lanfredi, 530 - Parque Residencial Maria Elmira - Caçapava/SP - CEP: 12285-010', '2025-11-18 17:55:47'),
 (16, 1, '2025-11-18 19:09:22', 289.99, 'confirmado', 'pix', 'Rua Maracanã, 12 - Laranjeiras - Betim/MG - CEP: 32676-345', '2025-11-18 22:09:22'),
-(17, 2, '2025-11-19 17:19:34', 399.99, 'confirmado', 'pix', 'Rua Essio Lanfredi, 12 - Parque Residencial Maria Elmira - Caçapava/SP - CEP: 12285-010', '2025-11-19 20:19:34');
+(17, 2, '2025-11-19 17:19:34', 399.99, 'confirmado', 'pix', 'Rua Essio Lanfredi, 12 - Parque Residencial Maria Elmira - Caçapava/SP - CEP: 12285-010', '2025-11-19 20:19:34'),
+(18, 8, '2025-11-23 00:48:48', 299.99, 'confirmado', 'pix', 'Rua Essio Lanfredi, 1 - Parque Residencial Maria Elmira - Caçapava/SP - CEP: 12285-010', '2025-11-23 03:48:48');
 
 -- --------------------------------------------------------
 
@@ -109,7 +110,8 @@ INSERT INTO `pedido_itens` (`id`, `pedido_id`, `produto_id`, `quantidade`, `prec
 (17, 14, 68, 1, 289.99, 289.99),
 (18, 14, 67, 1, 399.99, 399.99),
 (20, 16, 68, 1, 289.99, 289.99),
-(21, 17, 67, 1, 399.99, 399.99);
+(21, 17, 67, 1, 399.99, 399.99),
+(22, 18, 69, 1, 299.99, 299.99);
 
 -- --------------------------------------------------------
 
@@ -215,7 +217,7 @@ INSERT INTO `usuarios` (`id`, `nome`, `email`, `senha`, `data_cadastro`, `telefo
 (4, 'CAIO FIGUEIRA MACHADO', 'caio@gmail.com', '$2y$10$xl/t9kmktv3SvLRG.rjkkONj4t2UwnCyaijM/7XEwPc1aUTFvOWta', '2025-10-31 17:01:18', NULL, NULL, NULL, NULL, NULL, NULL, '2025-10-31 17:01:18'),
 (5, 'Caio', 'junnalvez.cpv@gmail.com', '$2y$10$s/CC1OOS0ibwzW5O7C.PVePms88/Ni31g866C4DdCbZFSnOS70qP6', '2025-10-31 17:24:46', NULL, NULL, NULL, NULL, NULL, NULL, '2025-10-31 17:24:46'),
 (6, 'caio', 'jovem@gmail.com', '$2y$10$NtGGpP3nA4O4nNJaTOqTYe8JAGtMf0pgXeJ0mpBYL5cDJaPBqhn9u', '2025-11-10 12:31:17', NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-10 12:31:17'),
-(8, 'Sophia', 'sophia@gmail.com', '$2y$10$dkhYnLBD/DyZhsm5v4yvyOcm0B1kbX/gzanbfrf7CTNXSEeVFnJIa', '2025-11-17 14:56:33', '', 'Rua Essio Lanfredi, 599 - Parque Residencial Maria Elmira', 'Caçapava', 'SP', '12285-010', NULL, '2025-11-17 14:56:33'),
+(8, 'Sophia', 'sophia@gmail.com', '$2y$10$dkhYnLBD/DyZhsm5v4yvyOcm0B1kbX/gzanbfrf7CTNXSEeVFnJIa', '2025-11-17 14:56:33', '', 'Rua Essio Lanfredi, 1 - Parque Residencial Maria Elmira', 'Caçapava', 'SP', '12285-010', 'uploads/perfis/perfil_8_1763869688.png', '2025-11-17 14:56:33'),
 (9, 'Bianca', 'bianca@ESTRANHA.com', '$2y$10$uuGcFWTlk6arVi9BqUzOjeonWfkbV0gWXUyus8EnkLbbSF3HyTDaa', '2025-11-17 17:49:09', NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-17 17:49:09'),
 (10, 'Ana', 'anabanana@regia.com', '$2y$10$9RPK1cRVygdEF1b9G..mMe0nQQCguPHfIs3cNm479Cz298UWDYCla', '2025-11-17 17:49:36', NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-17 17:49:36');
 
@@ -268,7 +270,7 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de tabela `pedidos`
 --
 ALTER TABLE `pedidos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT de tabela `pedido_historico`
@@ -280,7 +282,7 @@ ALTER TABLE `pedido_historico`
 -- AUTO_INCREMENT de tabela `pedido_itens`
 --
 ALTER TABLE `pedido_itens`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT de tabela `produtos`
