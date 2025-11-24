@@ -261,7 +261,7 @@ $destaques = [
         
         /* Hero Section */
         .hero {
-            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('img/lavellehome.png') no-repeat center center/cover;
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('img/sophiaru.jpg') no-repeat center center/cover;
             background-size: cover;
             background-position: center;
             height: 80vh;
