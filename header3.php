@@ -21,27 +21,7 @@
             top: 0;
             z-index: 1000;
         }
-         .header-banner {
-                background-color: #000;
-    color: #ffffff;
-    text-align: center;
-    padding: 8px 0;
-    font-size: 14px;
-    font-weight: 300;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    border-bottom: 1px solid #333;
-        }
         
-        .header-banner h1 {
-           
-            font-size: 14px;
-            font-weight: 400;
-            margin: 0;
-            padding: 0;
-            letter-spacing: 3px;
-            color: #f5f5f5;
-        }
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -99,6 +79,27 @@
         .profile-link {
             color: #8b7355 !important;
         }
+         .header-banner {
+                background-color: #000;
+    color: #ffffff;
+    text-align: center;
+    padding: 8px 0;
+    font-size: 14px;
+    font-weight: 300;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border-bottom: 1px solid #333;
+        }
+        
+        .header-banner h1 {
+           
+            font-size: 14px;
+            font-weight: 400;
+            margin: 0;
+            padding: 0;
+            letter-spacing: 3px;
+            color: #f5f5f5;
+        }
     </style>
 </head>
 <body>
@@ -116,32 +117,47 @@
     }
     ?>
     <header>
-        <div class="container">
+      <div class="container">
             <div class="header-top">
-                <div class="logo"><?php echo $empresa ?? 'LAVELLE'; ?></div>
+                <div class="logo"><?php echo $empresa; ?></div>
                 <nav>
                     <ul>
                         <li><a href="index.php">INÍCIO</a></li>
-                        <li><a href="paginaprodutos.php">PRODUTOS</a></li>
-                       
+                        <li><a href="paginaprodutos.php" style="color: #8b7355;">PRODUTOS</a></li>
                         <li><a href="sobre.php">SOBRE</a></li>
                         <li><a href="contato.php">CONTATO</a></li>
                         
-                        <!-- Menu do Usuário - CORRIGIDO -->
+                        <!-- Menu do Usuário -->
                         <?php if ($usuarioLogado): ?>
                             <div class="user-menu">
                                 <span style="color: #8b7355; font-weight: 500;">Olá, <?php echo htmlspecialchars($usuarioNome); ?></span>
-                                <li><a href="perfil.php" class="profile-link">MEU PERFIL</a></li>
+                              
                                 
                                 <!-- LINK ADM - APENAS PARA ADMINISTRADOR -->
-                          
+                                <?php if ($isAdmin): ?>
+                                    <li><a href="admin/dashboard.php" class="admin-link">ADM</a></li>
+                                <?php endif; ?>
+                                 <li>
+                                    <button class="cart-icon" onclick="openCartModal()">
+                                        CARRINHO
+                                        <?php if (count($_SESSION['carrinho']) > 0): ?>
+                                            <span class="cart-badge"><?php echo array_sum($_SESSION['carrinho']); ?></span>
+                                        <?php endif; ?>
+                                    </button>
+                                </li>
                                 
-                                <li><a href="logout.php">SAIR</a></li>
                             </div>
                         <?php else: ?>
                             <div class="user-menu">
                                 <li><a href="login.php">ENTRAR</a></li>
-                              
+                                <li>
+                                    <button class="cart-icon" onclick="openCartModal()">
+                                        CARRINHO
+                                        <?php if (count($_SESSION['carrinho']) > 0): ?>
+                                            <span class="cart-badge"><?php echo array_sum($_SESSION['carrinho']); ?></span>
+                                        <?php endif; ?>
+                                    </button>
+                                </li>
                             </div>
                         <?php endif; ?>
                     </ul>

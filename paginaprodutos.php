@@ -1626,53 +1626,7 @@ function buildUrl($params = []) {
     </div>
      
     <header>
-        <div class="container">
-            <div class="header-top">
-                <div class="logo"><?php echo $empresa; ?></div>
-                <nav>
-                    <ul>
-                        <li><a href="index.php">INÍCIO</a></li>
-                        <li><a href="paginaprodutos.php" style="color: #8b7355;">PRODUTOS</a></li>
-                        <li><a href="sobre.php">SOBRE</a></li>
-                        <li><a href="contato.php">CONTATO</a></li>
-                        
-                        <!-- Menu do Usuário -->
-                        <?php if ($usuarioLogado): ?>
-                            <div class="user-menu">
-                                <span style="color: #8b7355; font-weight: 500;">Olá, <?php echo htmlspecialchars($usuarioNome); ?></span>
-                              
-                                
-                                <!-- LINK ADM - APENAS PARA ADMINISTRADOR -->
-                                <?php if ($isAdmin): ?>
-                                    <li><a href="admin/dashboard.php" class="admin-link">ADM</a></li>
-                                <?php endif; ?>
-                                 <li>
-                                    <button class="cart-icon" onclick="openCartModal()">
-                                        CARRINHO
-                                        <?php if (count($_SESSION['carrinho']) > 0): ?>
-                                            <span class="cart-badge"><?php echo array_sum($_SESSION['carrinho']); ?></span>
-                                        <?php endif; ?>
-                                    </button>
-                                </li>
-                                
-                            </div>
-                        <?php else: ?>
-                            <div class="user-menu">
-                                <li><a href="login.php">ENTRAR</a></li>
-                                <li>
-                                    <button class="cart-icon" onclick="openCartModal()">
-                                        CARRINHO
-                                        <?php if (count($_SESSION['carrinho']) > 0): ?>
-                                            <span class="cart-badge"><?php echo array_sum($_SESSION['carrinho']); ?></span>
-                                        <?php endif; ?>
-                                    </button>
-                                </li>
-                            </div>
-                        <?php endif; ?>
-                    </ul>
-                </nav>
-            </div>
-        </div>
+      <?php include 'header3.php'; ?>
     </header>
     
     <div class="breadcrumb">

@@ -87,17 +87,32 @@ if($_POST) {
             $tipo_mensagem = "error";
         }
     } elseif($action === 'delete') {
-        // Excluir produto
+        // Excluir produto - CORREÇÃO APLICADA AQUI
         $id = $_POST['id'];
         
         try {
-            $query = "DELETE FROM produtos WHERE id = ?";
-            $stmt = $db->prepare($query);
-            $stmt->execute([$id]);
+            // Iniciar transação para garantir consistência
+            $db->beginTransaction();
+            
+            // 1. Primeiro excluir os itens do pedido relacionados a este produto
+            $query_delete_itens = "DELETE FROM pedido_itens WHERE produto_id = ?";
+            $stmt_itens = $db->prepare($query_delete_itens);
+            $stmt_itens->execute([$id]);
+            
+            // 2. Depois excluir o produto
+            $query_delete_produto = "DELETE FROM produtos WHERE id = ?";
+            $stmt_produto = $db->prepare($query_delete_produto);
+            $stmt_produto->execute([$id]);
+            
+            // Confirmar transação
+            $db->commit();
             
             $mensagem = "Produto excluído com sucesso!";
             $tipo_mensagem = "success";
+            
         } catch(PDOException $e) {
+            // Reverter transação em caso de erro
+            $db->rollBack();
             $mensagem = "Erro ao excluir produto: " . $e->getMessage();
             $tipo_mensagem = "error";
         }
@@ -269,19 +284,8 @@ include 'includes/sidebar.php';
                             <td>R$ <?php echo number_format($produto['preco'], 2, ',', '.'); ?></td>
                             <td><?php echo date('d/m/Y', strtotime($produto['created_at'])); ?></td>
                             <td class="actions">
-                                <button class="btn-edit" onclick="editProduto(
-                                    <?php echo $produto['id']; ?>, 
-                                    '<?php echo htmlspecialchars($produto['nome']); ?>', 
-                                    '<?php echo htmlspecialchars($produto['descricao_breve']); ?>', 
-                                    '<?php echo htmlspecialchars($produto['descricao_longa']); ?>', 
-                                    '<?php echo $produto['preco']; ?>', 
-                                    '<?php echo $produto['imagem']; ?>',
-                                    '<?php echo $produto['categoria']; ?>',
-                                    '<?php echo isset($produto['notas_saida']) ? htmlspecialchars($produto['notas_saida']) : ''; ?>',
-                                    '<?php echo isset($produto['notas_coracao']) ? htmlspecialchars($produto['notas_coracao']) : ''; ?>',
-                                    '<?php echo isset($produto['notas_fundo']) ? htmlspecialchars($produto['notas_fundo']) : ''; ?>'
-                                )">Editar</button>
-                                <button class="btn-delete" onclick="deleteProduto(<?php echo $produto['id']; ?>)">Excluir</button>
+                                <button class="btn-edit" onclick="editProduto(<?php echo $produto['id']; ?>)">Editar</button>
+                                <button class="btn-delete" onclick="deleteProduto(<?php echo $produto['id']; ?>, '<?php echo htmlspecialchars($produto['nome']); ?>')">Excluir</button>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -371,7 +375,10 @@ include 'includes/sidebar.php';
 <div id="confirmModal" class="modal">
     <div class="modal-content">
         <h2>Confirmar Exclusão</h2>
-        <p>Tem certeza que deseja excluir este produto?</p>
+        <p id="confirmMessage">Tem certeza que deseja excluir este produto?</p>
+        <p style="color: #e74c3c; font-size: 14px; margin-top: 10px;">
+            <strong>Atenção:</strong> Esta ação também excluirá todos os itens de pedidos relacionados a este produto.
+        </p>
         <form id="deleteForm" method="POST">
             <input type="hidden" name="action" value="delete">
             <input type="hidden" id="deleteId" name="id">
@@ -386,6 +393,9 @@ include 'includes/sidebar.php';
 <?php include 'includes/footer.php'; ?>
 
 <script>
+// Variável global para armazenar os produtos
+let produtosData = <?php echo json_encode($produtos); ?>;
+
 function openModal(action) {
     document.getElementById('produtoModal').style.display = 'block';
     document.getElementById('action').value = action;
@@ -401,55 +411,72 @@ function closeModal() {
     document.getElementById('produtoModal').style.display = 'none';
 }
 
-function editProduto(id, nome, descricaoBreve, descricaoLonga, preco, imagem, categoria, notasSaida, notasCoracao, notasFundo) {
+function editProduto(id) {
+    // Encontrar o produto pelo ID
+    const produto = produtosData.find(p => p.id == id);
+    
+    if (!produto) {
+        alert('Produto não encontrado!');
+        return;
+    }
+
     document.getElementById('produtoModal').style.display = 'block';
     document.getElementById('modalTitle').textContent = 'Editar Produto';
     document.getElementById('action').value = 'update';
-    document.getElementById('produtoId').value = id;
-    document.getElementById('nome').value = nome;
-    document.getElementById('descricao_breve').value = descricaoBreve;
-    document.getElementById('descricao_longa').value = descricaoLonga;
-    document.getElementById('preco').value = preco;
-    document.getElementById('imagem').value = imagem;
-    document.getElementById('categoria').value = categoria;
+    document.getElementById('produtoId').value = produto.id;
+    document.getElementById('nome').value = produto.nome;
+    document.getElementById('descricao_breve').value = produto.descricao_breve;
+    document.getElementById('descricao_longa').value = produto.descricao_longa;
+    document.getElementById('preco').value = produto.preco;
+    document.getElementById('imagem').value = produto.imagem;
+    document.getElementById('categoria').value = produto.categoria;
     
-    // Só preenche os campos de notas se eles existirem
+    // Atualizar contador de caracteres
+    updateCharCounter();
+    
+    // Preencher campos de notas se existirem
     const notasSaidaField = document.getElementById('notas_saida');
     const notasCoracaoField = document.getElementById('notas_coracao');
     const notasFundoField = document.getElementById('notas_fundo');
     
-    if (notasSaidaField) notasSaidaField.value = notasSaida;
-    if (notasCoracaoField) notasCoracaoField.value = notasCoracao;
-    if (notasFundoField) notasFundoField.value = notasFundo;
+    if (notasSaidaField && produto.notas_saida) {
+        notasSaidaField.value = produto.notas_saida;
+    }
+    if (notasCoracaoField && produto.notas_coracao) {
+        notasCoracaoField.value = produto.notas_coracao;
+    }
+    if (notasFundoField && produto.notas_fundo) {
+        notasFundoField.value = produto.notas_fundo;
+    }
 }
 
-function deleteProduto(id) {
+function deleteProduto(id, nome) {
     document.getElementById('confirmModal').style.display = 'block';
     document.getElementById('deleteId').value = id;
+    document.getElementById('confirmMessage').textContent = 'Tem certeza que deseja excluir o produto "' + nome + '"?';
 }
 
 function closeConfirmModal() {
     document.getElementById('confirmModal').style.display = 'none';
 }
 
-// Contador de caracteres para descrição breve
-document.getElementById('descricao_breve').addEventListener('input', function() {
+// Função para atualizar contador de caracteres
+function updateCharCounter() {
+    const textarea = document.getElementById('descricao_breve');
     const maxLength = 150;
-    const currentLength = this.value.length;
+    const currentLength = textarea.value.length;
     const counter = document.getElementById('charCounter') || createCharCounter();
     
     counter.textContent = currentLength + '/' + maxLength + ' caracteres';
     
     if (currentLength > maxLength) {
-        this.value = this.value.substring(0, maxLength);
-        counter.textContent = maxLength + '/' + maxLength + ' caracteres';
         counter.style.color = '#e74c3c';
     } else if (currentLength > 130) {
         counter.style.color = '#e67e22';
     } else {
         counter.style.color = '#666';
     }
-});
+}
 
 function createCharCounter() {
     const counter = document.createElement('small');
@@ -460,7 +487,28 @@ function createCharCounter() {
 }
 
 // Inicializar contador
-createCharCounter();
+document.addEventListener('DOMContentLoaded', function() {
+    createCharCounter();
+    
+    // Adicionar evento de input para o contador
+    document.getElementById('descricao_breve').addEventListener('input', function() {
+        const maxLength = 150;
+        const currentLength = this.value.length;
+        const counter = document.getElementById('charCounter');
+        
+        counter.textContent = currentLength + '/' + maxLength + ' caracteres';
+        
+        if (currentLength > maxLength) {
+            this.value = this.value.substring(0, maxLength);
+            counter.textContent = maxLength + '/' + maxLength + ' caracteres';
+            counter.style.color = '#e74c3c';
+        } else if (currentLength > 130) {
+            counter.style.color = '#e67e22';
+        } else {
+            counter.style.color = '#666';
+        }
+    });
+});
 
 // Fechar modal ao clicar fora
 window.onclick = function(event) {
@@ -471,4 +519,14 @@ window.onclick = function(event) {
         }
     }
 }
+
+// Prevenir que o formulário seja enviado se a descrição breve estiver muito longa
+document.getElementById('produtoForm').addEventListener('submit', function(e) {
+    const descricaoBreve = document.getElementById('descricao_breve');
+    if (descricaoBreve.value.length > 150) {
+        e.preventDefault();
+        alert('A descrição breve não pode ter mais de 150 caracteres.');
+        descricaoBreve.focus();
+    }
+});
 </script>
