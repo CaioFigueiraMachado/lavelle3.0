@@ -1053,7 +1053,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['nova_mensagem'])) {
                                             <div class="message-bubble-header">
                                                 <div class="bubble-sender">
                                                     <?php if($msg['remetente'] == 'admin'): ?>
-                                                        Suporte LAVELLE
+                                                        Admnistrador Lavelle 
                                                     <?php else: ?>
                                                         <?php echo htmlspecialchars($mensagem['nome'] ?: 'Você'); ?>
                                                     <?php endif; ?>

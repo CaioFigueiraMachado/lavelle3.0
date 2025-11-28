@@ -820,14 +820,14 @@ if (isset($_SESSION['usuario_id']) || isset($_SESSION['id'])) {
             <div class="team-grid">
                 <div class="team-member fade-in">
                     <div class="member-photo">
-                        <img src="img/caii.png" alt="Caio Machado">
+                        <img src="img/caioprof.jpg" alt="Caio Machado">
                     </div>
                     <h3>Caio Machado</h3>
                     <div class="role">DEV TEAM</div>
                 </div>
                 <div class="team-member fade-in">
                     <div class="member-photo">
-                        <img src="img/lucas (1).png" alt="Lucas Henrique">
+                        <img src="img/lucasprof.jpg" alt="Lucas Henrique">
                     </div>
                     <h3>Lucas Henrique</h3>
                     <div class="role">DEV TEAM</div>

@@ -167,8 +167,8 @@
         <div class="header">
             <h1> COMPROVANTE DE PEDIDO</h1>
             <div class="numero-pedido">Pedido #019</div>
-            <div class="status-badge status-pendente">
-                Pendente            </div>
+            <div class="status-badge status-confirmado">
+                Confirmado            </div>
         </div>
 
         <div class="info-grid">
@@ -184,8 +184,8 @@
                 </div>
                 <div class="info-item">
                     <div class="info-label">Status:</div>
-                    <div class="info-value status-badge status-pendente">
-                        Pendente                    </div>
+                    <div class="info-value status-badge status-confirmado">
+                        Confirmado                    </div>
                 </div>
             </div>
 
@@ -244,7 +244,7 @@
         </div>
 
         <div class="footer">
-            <p>Comprovante gerado automaticamente em 24/11/2025 às 19:54</p>
+            <p>Comprovante gerado automaticamente em 28/11/2025 às 20:06</p>
             <p>Obrigado pela preferência! </p>
         </div>
     </div>

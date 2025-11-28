@@ -885,9 +885,9 @@ $usuarioTelefone = $_SESSION['telefone'] ?? '';
                 <div class="footer-column">
                     <h3>REDES SOCIAIS</h3>
                     <div class="social-links">
-                        <a href="#"><i class="fab fa-facebook"></i> Facebook</a><br>
-                        <a href="#"><i class="fab fa-instagram"></i> Instagram</a><br>
-                        <a href="#"><i class="fab fa-twitter"></i> Twitter</a>
+                        <a href="#"><i class=""></i> Facebook</a><br>
+                        <a href="#"><i class=""></i> Instagram</a><br>
+                        <a href="#"><i class=""></i> Twitter</a>
                     </div>
                 </div>
                 <div class="footer-column">
