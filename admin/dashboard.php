@@ -234,38 +234,6 @@ include 'includes/sidebar.php';
             </div>
         </div>
 
-        <div class="content-card">
-            <div class="card-header">
-                <h2>Ações Rápidas</h2>
-            </div>
-            <div class="quick-actions">
-                <a href="usuarios.php?action=create" class="quick-action-btn">
-                    <div class="action-icon">
-                        <img src="../img/novouser.png" alt="Novo Usuário" class="action-icon-img">
-                    </div>
-                    <span>Novo Usuário</span>
-                </a>
-                <a href="produtos.php?action=create" class="quick-action-btn">
-                    <div class="action-icon">
-                        <img src="../img/novo.png" alt="Novo Produto" class="action-icon-img">
-                    </div>
-                    <span>Novo Produto</span>
-                </a>
-                <a href="pedidos.php" class="quick-action-btn">
-                    <div class="action-icon">
-                        <img src="../img/iconmais.png" alt="Gerenciar Pedidos" class="action-icon-img">
-                    </div>
-                    <span>Gerenciar Pedidos</span>
-                </a>
-                <a href="produtos.php" class="quick-action-btn">
-                    <div class="action-icon">
-                        <img src="../img/gerenciarprodutos.png" alt="Gerenciar Produtos" class="action-icon-img">
-                    </div>
-                    <span>Gerenciar Produtos</span>
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
+        
 
 <?php include 'includes/footer.php'; ?>

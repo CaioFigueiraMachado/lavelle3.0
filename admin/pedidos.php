@@ -483,7 +483,7 @@ include 'includes/sidebar.php';
 }
 
 .results-info {
-    background: #8b7355;
+    background: #000000ff;
     color: white;
     padding: 6px 12px;
     border-radius: 20px;
@@ -830,7 +830,7 @@ include 'includes/sidebar.php';
 
 /* Botões Principais */
 .btn-primary {
-    background: #8b7355;
+    background: #000000ff;
     color: white;
     padding: 10px 18px;
     border: none;
@@ -855,9 +855,9 @@ include 'includes/sidebar.php';
 
 .btn-outline {
     background: white;
-    color: #8b7355;
+    color: #000000ff;
     padding: 10px 18px;
-    border: 2px solid #8b7355;
+    border: 2px solid #000000ff;
     border-radius: 6px;
     cursor: pointer;
     text-decoration: none;

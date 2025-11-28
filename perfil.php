@@ -46,6 +46,20 @@ try {
     $favoritos = [];
 }
 
+// Buscar mensagens do usuário
+try {
+    $sql_mensagens = "SELECT cm.*, 
+                     (SELECT COUNT(*) FROM contato_respostas cr WHERE cr.mensagem_id = cm.id AND cr.remetente = 'admin' AND cr.lida = 0) as novas_respostas
+                     FROM contato_mensagens cm 
+                     WHERE cm.usuario_id = ? 
+                     ORDER BY cm.updated_at DESC";
+    $stmt_mensagens = $con->prepare($sql_mensagens);
+    $stmt_mensagens->execute([$usuario_id]);
+    $mensagens_contato = $stmt_mensagens->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $mensagens_contato = [];
+}
+
 // Verificar se a coluna foto_perfil existe
 $coluna_existe = false;
 try {
@@ -1068,7 +1082,205 @@ if ($coluna_existe) {
             letter-spacing: 3px;
             color: #f5f5f5;
         }
-        
+
+        /* Estilos para a aba de mensagens - Estilo LAVELLE */
+        .mensagens-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .mensagem-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-left: 4px solid #8b7355;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mensagem-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #8b7355, #d4b896);
+        }
+
+        .mensagem-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .mensagem-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .mensagem-assunto {
+            flex: 1;
+        }
+
+        .mensagem-assunto h4 {
+            color: #000;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+            line-height: 1.3;
+        }
+
+        .novas-respostas-badge {
+            background: linear-gradient(135deg, #8b7355, #d4b896);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .mensagem-status {
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-aberta { 
+            background: #fff3cd; 
+            color: #856404; 
+            border: 1px solid #ffeaa7;
+        }
+
+        .status-respondida { 
+            background: #d1ecf1; 
+            color: #0c5460; 
+            border: 1px solid #b8e2e8;
+        }
+
+        .status-fechada { 
+            background: #d4edda; 
+            color: #155724; 
+            border: 1px solid #c3e6cb;
+        }
+
+        .mensagem-preview {
+            margin-bottom: 20px;
+        }
+
+        .mensagem-preview p {
+            color: #666;
+            line-height: 1.5;
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .mensagem-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .mensagem-info {
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+            color: #888;
+        }
+
+        .mensagem-data, .mensagem-hora {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .mensagem-action .btn-ver-mensagem {
+            color: #8b7355;
+            font-weight: 600;
+            font-size: 14px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .mensagem-card:hover .btn-ver-mensagem {
+            color: #000;
+            transform: translateX(5px);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            color: #000;
+            font-size: 24px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+            margin-bottom: 0;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Responsividade para mensagens */
+        @media (max-width: 768px) {
+            .mensagem-card-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+            
+            .mensagem-status {
+                align-self: flex-start;
+            }
+            
+            .mensagem-card-footer {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+            
+            .mensagem-info {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .mensagem-card {
+                padding: 20px;
+            }
+            
+            .mensagem-assunto h4 {
+                font-size: 16px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1116,7 +1328,7 @@ if ($coluna_existe) {
                 <div class="profile-tabs">
                     <button class="profile-tab active" data-tab="perfil">Perfil</button>
                     <button class="profile-tab" data-tab="pedidos">Meus Pedidos</button>
-                    
+                    <button class="profile-tab" data-tab="contato">Minhas Mensagens</button>
                     <button class="profile-tab" data-tab="seguranca">Segurança</button>
                 </div>
                 
@@ -1163,8 +1375,8 @@ if ($coluna_existe) {
                                     <span class="stat-value"><?php echo count($pedidos); ?></span>
                                 </div>
                                 <div class="stat-item">
-                                    <span class="stat-label">Favoritos</span>
-                                    <span class="stat-value"><?php echo count($favoritos); ?></span>
+                                    <span class="stat-label">Mensagens</span>
+                                    <span class="stat-value"><?php echo count($mensagens_contato); ?></span>
                                 </div>
                             </div>
                         </div>
@@ -1289,7 +1501,6 @@ if ($coluna_existe) {
                                             <button class="btn btn-small" onclick="verComprovanteReal(<?php echo $pedido['id']; ?>)">
                                                 <i class="fas fa-receipt"></i> Ver Comprovante
                                             </button>
-                                           
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
@@ -1305,29 +1516,66 @@ if ($coluna_existe) {
                     </div>
                 </div>
                 
-                <!-- Aba de Favoritos -->
-                <div class="tab-content" id="tab-favoritos">
+                <!-- Aba de Contato -->
+                <div class="tab-content" id="tab-contato">
                     <div class="profile-form-container">
-                        <h3>Meus Favoritos</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                            <h3 style="color: #000; font-size: 24px; margin: 0;">Minhas Mensagens</h3>
+                            <a href="contato.php" class="btn" style="padding: 12px 25px;">
+                                <i class="fas fa-plus"></i> Nova Mensagem
+                            </a>
+                        </div>
                         
-                        <?php if (count($favoritos) > 0): ?>
-                            <div class="favoritos-grid">
-                                <?php foreach ($favoritos as $favorito): ?>
-                                    <div class="favorito-item">
-                                        <img src="<?php echo htmlspecialchars($favorito['imagem'] ?? 'images/produto-placeholder.jpg'); ?>" 
-                                             alt="<?php echo htmlspecialchars($favorito['nome']); ?>" class="favorito-imagem">
-                                        <div class="favorito-nome"><?php echo htmlspecialchars($favorito['nome']); ?></div>
-                                        <div class="favorito-preco">R$ <?php echo number_format($favorito['preco'], 2, ',', '.'); ?></div>
-                                        <a href="produto.php?id=<?php echo $favorito['id']; ?>" class="btn" style="padding: 10px 20px; font-size: 14px; width: 100%;">Ver Produto</a>
+                        <?php if (count($mensagens_contato) > 0): ?>
+                            <div class="mensagens-grid">
+                                <?php foreach ($mensagens_contato as $mensagem): ?>
+                                    <div class="mensagem-card fade-in" onclick="abrirChat(<?php echo $mensagem['id']; ?>)">
+                                        <div class="mensagem-card-header">
+                                            <div class="mensagem-assunto">
+                                                <h4><?php echo htmlspecialchars($mensagem['assunto']); ?></h4>
+                                                <?php if ($mensagem['novas_respostas'] > 0): ?>
+                                                    <span class="novas-respostas-badge">
+                                                        <?php echo $mensagem['novas_respostas']; ?> nova(s)
+                                                    </span>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="mensagem-status status-<?php echo $mensagem['status']; ?>">
+                                                <?php echo ucfirst($mensagem['status']); ?>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mensagem-preview">
+                                            <p><?php echo substr(strip_tags($mensagem['mensagem']), 0, 120); ?>...</p>
+                                        </div>
+                                        
+                                        <div class="mensagem-card-footer">
+                                            <div class="mensagem-info">
+                                                <span class="mensagem-data">
+                                                    <i class="far fa-calendar"></i>
+                                                    <?php echo date('d/m/Y', strtotime($mensagem['created_at'])); ?>
+                                                </span>
+                                                <span class="mensagem-hora">
+                                                    <i class="far fa-clock"></i>
+                                                    <?php echo date('H:i', strtotime($mensagem['created_at'])); ?>
+                                                </span>
+                                            </div>
+                                            <div class="mensagem-action">
+                                                <span class="btn-ver-mensagem">
+                                                    Ver Conversa <i class="fas fa-arrow-right"></i>
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
                         <?php else: ?>
                             <div class="empty-state">
-                                <i class="fas fa-heart"></i>
-                                <h3>Nenhum favorito adicionado</h3>
-                                <p>Adicione produtos aos seus favoritos para vê-los aqui.</p>
-                                <a href="paginaprodutos.php" class="btn" style="margin-top: 20px;">Explorar Produtos</a>
+                                <div class="empty-icon">
+                                    <i class="fas fa-comments"></i>
+                                </div>
+                                <h3>Nenhuma mensagem encontrada</h3>
+                                <p>Você ainda não enviou nenhuma mensagem de contato.</p>
+                                
                             </div>
                         <?php endif; ?>
                     </div>
@@ -1625,15 +1873,6 @@ if ($coluna_existe) {
             `;
         }
 
-        function verDetalhesPedido(pedidoId) {
-            Swal.fire({
-                title: 'Detalhes do Pedido',
-                html: `Carregando detalhes do pedido #${pedidoId}...`,
-                icon: 'info',
-                confirmButtonText: 'Fechar'
-            });
-        }
-
         function fecharComprovante() {
             document.getElementById('comprovanteModal').style.display = 'none';
         }
@@ -1641,6 +1880,43 @@ if ($coluna_existe) {
         function imprimirComprovante() {
             window.print();
         }
+
+        function abrirChat(mensagemId) {
+            window.location.href = 'chat_contato.php?id=' + mensagemId;
+        }
+
+        // Verificar se há âncora na URL e ativar a aba correspondente
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlHash = window.location.hash;
+            
+            if (urlHash) {
+                // Remover o # da hash
+                const tabId = urlHash.substring(1);
+                
+                // Verificar se é uma aba válida
+                const validTabs = ['tab-perfil', 'tab-pedidos', 'tab-contato', 'tab-seguranca'];
+                
+                if (validTabs.includes(tabId)) {
+                    // Remover active de todas as abas
+                    document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // Ativar a aba correspondente
+                    const tabButton = document.querySelector(`.profile-tab[data-tab="${tabId.replace('tab-', '')}"]`);
+                    const tabContent = document.getElementById(tabId);
+                    
+                    if (tabButton && tabContent) {
+                        tabButton.classList.add('active');
+                        tabContent.classList.add('active');
+                        
+                        // Scroll suave para a seção
+                        setTimeout(() => {
+                            tabContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 100);
+                    }
+                }
+            }
+        });
 
         // Fechar modal ao clicar fora
         window.addEventListener('click', function(event) {

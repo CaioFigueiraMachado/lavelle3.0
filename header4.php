@@ -122,10 +122,7 @@ if (!isset($usuarioLogado)) {
                         <!-- Menu do Usuário - CORRIGIDO -->
                         <?php if ($usuarioLogado): ?>
                             <div class="user-menu">
-                                <span style="color: #8b7355; font-weight: 500;">Olá, <?php echo htmlspecialchars($usuarioNome); ?></span>
-                                <li><a href="perfil.php" class="profile-link">MEU PERFIL</a></li>
-                                
-                                <!-- LINK ADM - APENAS PARA ADMINISTRADOR -->
+                               
                           
                                 
                                 <li><a href="logout.php">SAIR</a></li>

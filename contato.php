@@ -2,12 +2,11 @@
 session_start();
 include 'conexao.php';
 
-
-
-if (isset($_SESSION['usuario_id'])) {
-    $usuarioLogado = true;
-    $usuarioNome = $_SESSION['usuario_nome'];
-}
+// Verificar sessão correta
+$usuarioLogado = isset($_SESSION['id']);
+$usuarioNome = $_SESSION['nome'] ?? '';
+$usuarioEmail = $_SESSION['email'] ?? '';
+$usuarioTelefone = $_SESSION['telefone'] ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -15,10 +14,10 @@ if (isset($_SESSION['usuario_id'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contato - LAVELLE Perfumes</title>
-    <!-- SweetAlert2 CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        /* Reset e estilos gerais */
         * {
             margin: 0;
             padding: 0;
@@ -194,7 +193,7 @@ if (isset($_SESSION['usuario_id'])) {
         .contact-form {
             background-color: white;
             border-radius: 15px;
-            padding: 40px;
+            padding: 50px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         
@@ -256,6 +255,17 @@ if (isset($_SESSION['usuario_id'])) {
             background-color: #333;
         }
         
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid #000;
+            color: #000;
+        }
+        
+        .btn-outline:hover {
+            background-color: #000;
+            color: white;
+        }
+        
         /* Contact Info */
         .contact-info {
             display: flex;
@@ -300,6 +310,38 @@ if (isset($_SESSION['usuario_id'])) {
         .info-card a:hover {
             color: #000;
             text-decoration: underline;
+        }
+        
+        /* Alert Styles */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .alert-success {
+            background: #eaf8ef;
+            color: #1f7a34;
+            border-left: 4px solid #27ae60;
+        }
+
+        .alert-error {
+            background: #ffeaea;
+            color: #8a1b1b;
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .error {
+            border-color: #e74c3c !important;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 5px;
+            display: block;
         }
         
         /* Map Section */
@@ -367,7 +409,7 @@ if (isset($_SESSION['usuario_id'])) {
         
         .faq-answer.active {
             padding: 25px;
-            max-height: 200px;
+            max-height: 500px;
         }
         
         .faq-answer p {
@@ -385,43 +427,8 @@ if (isset($_SESSION['usuario_id'])) {
             transform: rotate(45deg);
         }
         
-        /* Error Styles */
-        .error {
-            border-color: #e74c3c !important;
-        }
-        
-        .error-message {
-            color: #e74c3c;
-            font-size: 14px;
-            margin-top: 5px;
-            display: block;
-        }
-        
-        /* Notification */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #27ae60;
-            color: white;
-            padding: 15px 25px;
-            border-radius: 8px;
-            z-index: 1000;
-            animation: slideInRight 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        
-        @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-           .newsletter {
+        /* Newsletter */
+        .newsletter {
             background-color: #000;
             color: white;
             text-align: center;
@@ -469,7 +476,6 @@ if (isset($_SESSION['usuario_id'])) {
         .newsletter-btn:hover {
             background-color: #756049;
         }
-        
         
         /* Footer */
         footer {
@@ -627,6 +633,7 @@ if (isset($_SESSION['usuario_id'])) {
         .fade-in {
             animation: fadeInUp 0.8s ease-out;
         }
+        
         /* Header Banner */
         .header-banner {
             background-color: #000;
@@ -648,7 +655,6 @@ if (isset($_SESSION['usuario_id'])) {
             letter-spacing: 3px;
             color: #f5f5f5;
         }
-        
     </style>
 </head>
 <body>
@@ -664,7 +670,6 @@ if (isset($_SESSION['usuario_id'])) {
         <video class="hero-video" autoplay muted loop playsinline>
             <source src="contato2.mp4" type="video/mp4">
             <source src="hero-video.webm" type="video/webm">
-            <!-- Fallback para navegadores que não suportam vídeo -->
             Seu navegador não suporta o elemento de vídeo.
         </video>
         <div class="video-overlay"></div>
@@ -683,22 +688,41 @@ if (isset($_SESSION['usuario_id'])) {
             <div class="contact-grid">
                 <div class="contact-form fade-in">
                     <h2>Envie sua Mensagem</h2>
-                    <form id="contactForm">
+                    
+                    <?php if (isset($_SESSION['contato_sucesso'])): ?>
+                        <div class="alert alert-success">
+                            <?php echo $_SESSION['contato_sucesso']; unset($_SESSION['contato_sucesso']); ?>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <?php if (isset($_SESSION['contato_erro'])): ?>
+                        <div class="alert alert-error">
+                            <?php echo $_SESSION['contato_erro']; unset($_SESSION['contato_erro']); ?>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <form method="POST" action="processa_contato.php" id="contactForm">
                         <div class="form-group">
                             <label class="form-label" for="name">Nome Completo *</label>
-                            <input type="text" class="form-input" id="name" name="name" required>
+                            <input type="text" class="form-input" id="name" name="name" 
+                                   value="<?php echo htmlspecialchars($usuarioNome); ?>" 
+                                   <?php echo $usuarioLogado ? 'readonly' : 'required'; ?>>
                             <span class="error-message" id="nameError"></span>
                         </div>
                         
                         <div class="form-group">
                             <label class="form-label" for="email">E-mail *</label>
-                            <input type="email" class="form-input" id="email" name="email" required>
+                            <input type="email" class="form-input" id="email" name="email"
+                                   value="<?php echo htmlspecialchars($usuarioEmail); ?>" 
+                                   <?php echo $usuarioLogado ? 'readonly' : 'required'; ?>>
                             <span class="error-message" id="emailError"></span>
                         </div>
                         
                         <div class="form-group">
                             <label class="form-label" for="phone">Telefone</label>
-                            <input type="tel" class="form-input" id="phone" name="phone">
+                            <input type="tel" class="form-input" id="phone" name="phone"
+                                   value="<?php echo htmlspecialchars($usuarioTelefone); ?>"
+                                   placeholder="(00) 00000-0000">
                             <span class="error-message" id="phoneError"></span>
                         </div>
                         
@@ -706,11 +730,12 @@ if (isset($_SESSION['usuario_id'])) {
                             <label class="form-label" for="subject">Assunto *</label>
                             <select class="form-select" id="subject" name="subject" required>
                                 <option value="">Selecione um assunto</option>
-                                <option value="duvida">Dúvida sobre produtos</option>
-                                <option value="pedido">Informações sobre pedido</option>
-                                <option value="troca">Trocas e devoluções</option>
-                                <option value="sugestao">Sugestões</option>
-                                <option value="outro">Outro</option>
+                                <option value="Dúvida sobre produtos">Dúvida sobre produtos</option>
+                                <option value="Informações sobre pedido">Informações sobre pedido</option>
+                                <option value="Trocas e devoluções">Trocas e devoluções</option>
+                                <option value="Sugestões">Sugestões</option>
+                                <option value="Problemas técnicos">Problemas técnicos</option>
+                                <option value="Outro">Outro</option>
                             </select>
                             <span class="error-message" id="subjectError"></span>
                         </div>
@@ -721,36 +746,46 @@ if (isset($_SESSION['usuario_id'])) {
                             <span class="error-message" id="messageError"></span>
                         </div>
                         
-                        <button type="submit" class="submit-btn">Enviar Mensagem</button>
+                        <button type="submit" class="submit-btn">
+                            <i class="fas fa-paper-plane"></i> Enviar Mensagem
+                        </button>
+                        
+                        <?php if ($usuarioLogado): ?>
+                            <div style="margin-top: 15px; text-align: center;">
+                                <a href="perfil.php#tab-contato" class="btn btn-outline" style="padding: 10px 20px; font-size: 14px;">
+                                    <i class="fas fa-comments"></i> Ver Minhas Mensagens
+                                </a>
+                            </div>
+                        <?php endif; ?>
                     </form>
                 </div>
                 
                 <div class="contact-info">
                     <div class="info-card fade-in">
-                        <h3> Endereço</h3>
-                        <p>Av. Monsenhor Theodomiro Lobo, 100</p>
-                        <p>Parque Res. Maria Elmira, Caçapava - SP</p>
-                        <p>CEP: 12285-050</p>
-                    </div>
-                    
-                    <div class="info-card fade-in">
-                        <h3> Telefones</h3>
+                        <h3><i class="fas fa-phone"></i> Telefones</h3>
                         <p><a href="tel:+5512998516345">(12) 99851-6345</a> - WhatsApp</p>
                         <p>Atendimento: Segunda a Sexta, 9h às 18h</p>
                     </div>
                     
                     <div class="info-card fade-in">
-                        <h3> E-mail</h3>
+                        <h3><i class="fas fa-envelope"></i> E-mail</h3>
                         <p><a href="mailto:contato@lavelle.com.br">contato@lavelle.com.br</a></p>
                         <p><a href="mailto:vendas@lavelle.com.br">vendas@lavelle.com.br</a></p>
                         <p>Resposta em até 24 horas</p>
                     </div>
                     
                     <div class="info-card fade-in">
-                        <h3> Horário de Funcionamento</h3>
+                        <h3><i class="fas fa-clock"></i> Horário de Funcionamento</h3>
                         <p><strong>Segunda a Sexta:</strong> 9h às 18h</p>
                         <p><strong>Sábado:</strong> 9h às 13h</p>
                         <p><strong>Domingo:</strong> Fechado</p>
+                    </div>
+                    
+                    <div class="info-card fade-in">
+                        <h3><i class="fas fa-map-marker-alt"></i> Endereço</h3>
+                        <p>Av. Monsenhor Theodomiro Lobo, 100</p>
+                        <p>Parque Res. Maria Elmira, Caçapava - SP</p>
+                        <p>CEP: 12285-050</p>
                     </div>
                 </div>
             </div>
@@ -825,8 +860,8 @@ if (isset($_SESSION['usuario_id'])) {
         </div>
     </section>
 
-    
-   <section class="newsletter">
+    <!-- Newsletter Section -->
+    <section class="newsletter">
         <div class="container">
             <h2>Junte-se ao Nosso Mundo de Fragrâncias</h2>
             <p>Receba novidades, lançamentos exclusivos e ofertas especiais diretamente no seu e-mail.</p>
@@ -850,9 +885,9 @@ if (isset($_SESSION['usuario_id'])) {
                 <div class="footer-column">
                     <h3>REDES SOCIAIS</h3>
                     <div class="social-links">
-                        <a href="#">Facebook</a><br>
-                        <a href="#">Instagram</a><br>
-                        <a href="#">Twitter</a>
+                        <a href="#"><i class="fab fa-facebook"></i> Facebook</a><br>
+                        <a href="#"><i class="fab fa-instagram"></i> Instagram</a><br>
+                        <a href="#"><i class="fab fa-twitter"></i> Twitter</a>
                     </div>
                 </div>
                 <div class="footer-column">
@@ -879,12 +914,8 @@ if (isset($_SESSION['usuario_id'])) {
         </div>
     </footer>
 
-    <!-- SweetAlert2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <script>
-
-         // Newsletter form com SweetAlert2
+        // Newsletter form com SweetAlert2
         document.getElementById('newsletterForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const email = document.getElementById('newsletterEmail').value;
@@ -906,7 +937,7 @@ if (isset($_SESSION['usuario_id'])) {
                 title: 'Bem-vindo(a) ao Mundo Lavelle!',
                 html: `
                     <div style="text-align: center;">
-                        <div style="font-size: 48px; margin-bottom: 20px;"></div>
+                        <div style="font-size: 48px; margin-bottom: 20px;">✨</div>
                         <p style="font-size: 18px; margin-bottom: 15px;"><strong>Inscrição realizada com sucesso!</strong></p>
                         <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 15px 0;">
                             <p style="margin: 5px 0;"><strong>E-mail cadastrado:</strong> ${email}</p>
@@ -969,7 +1000,7 @@ if (isset($_SESSION['usuario_id'])) {
             toggle.classList.toggle('active');
         }
 
-        // Validação do formulário
+        // Validação do formulário de contato
         function validateForm() {
             let isValid = true;
             
@@ -1027,66 +1058,58 @@ if (isset($_SESSION['usuario_id'])) {
             const contactForm = document.getElementById('contactForm');
             
             if (contactForm) {
-                contactForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    if (validateForm()) {
-                        // Usando SweetAlert2 para o formulário de contato também
-                        Swal.fire({
-                            title: 'Mensagem Enviada!',
-                            text: 'Obrigado pelo seu contato. Responderemos em breve.',
-                            icon: 'success',
-                            confirmButtonColor: '#8b7355',
-                            confirmButtonText: 'OK'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                this.reset();
-                            }
-                        });
-                    }
-                });
-            }
-            
-            // Validação em tempo real
-            const nameField = document.getElementById('name');
-            const emailField = document.getElementById('email');
-            const messageField = document.getElementById('message');
-            
-            if (nameField) {
-                nameField.addEventListener('blur', function() {
-                    if (this.value.trim().length < 2 && this.value.length > 0) {
-                        showFieldError('name', 'Nome deve ter pelo menos 2 caracteres');
-                    }
-                });
-            }
-            
-            if (emailField) {
-                emailField.addEventListener('blur', function() {
-                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                    if (this.value && !emailRegex.test(this.value)) {
-                        showFieldError('email', 'E-mail inválido');
-                    }
-                });
-            }
-            
-            if (messageField) {
-                messageField.addEventListener('blur', function() {
-                    if (this.value.trim().length < 10 && this.value.length > 0) {
-                        showFieldError('message', 'Mensagem deve ter pelo menos 10 caracteres');
-                    }
-                });
+                // Validação em tempo real
+                const nameField = document.getElementById('name');
+                const emailField = document.getElementById('email');
+                const messageField = document.getElementById('message');
+                const subjectField = document.getElementById('subject');
+                
+                if (nameField) {
+                    nameField.addEventListener('blur', function() {
+                        if (this.value.trim().length < 2 && this.value.length > 0) {
+                            showFieldError('name', 'Nome deve ter pelo menos 2 caracteres');
+                        }
+                    });
+                }
+                
+                if (emailField) {
+                    emailField.addEventListener('blur', function() {
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        if (this.value && !emailRegex.test(this.value)) {
+                            showFieldError('email', 'E-mail inválido');
+                        }
+                    });
+                }
+                
+                if (messageField) {
+                    messageField.addEventListener('blur', function() {
+                        if (this.value.trim().length < 10 && this.value.length > 0) {
+                            showFieldError('message', 'Mensagem deve ter pelo menos 10 caracteres');
+                        }
+                    });
+                }
+                
+                if (subjectField) {
+                    subjectField.addEventListener('change', function() {
+                        if (!this.value) {
+                            showFieldError('subject', 'Selecione um assunto');
+                        }
+                    });
+                }
             }
         }
 
-        function showNotification(message) {
-            const notification = document.createElement('div');
-            notification.className = 'notification';
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 4000);
-        }
+        // Máscara para telefone
+        document.getElementById('phone')?.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 2) {
+                value = '(' + value.substring(0,2) + ') ' + value.substring(2);
+            }
+            if (value.length > 10) {
+                value = value.substring(0,10) + '-' + value.substring(10,15);
+            }
+            e.target.value = value;
+        });
     </script>
 </body>
 </html>

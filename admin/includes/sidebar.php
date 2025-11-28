@@ -26,7 +26,14 @@
                             <span class="nav-icon"></span>
                             Gerenciar Pedidos
                         </a>
+                    </li></li> <li class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'admin_contato.php' ? 'active' : ''; ?>">
+                        <a href="admin_contato.php">
+                            <span class="nav-icon"></span>
+                            Gerenciar Contatos
+                        </a>
                     </li>
+                   
+                    
                      
                 
                        <li class="nav-item">

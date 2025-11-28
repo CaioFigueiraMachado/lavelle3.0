@@ -795,13 +795,13 @@ if (isset($_SESSION['usuario_id']) || isset($_SESSION['id'])) {
             <h2 class="section-title">Nossos Valores</h2>
             <div class="values-grid">
                 <div class="value-card fade-in">
-                    <div class="value-icon">E</div>
-                    <h3>Experiências únicas</h3>
+                    <div class="value-icon">M</div>
+                    <h3>Missão</h3>
                     <p>Proporcionar experiências olfativas únicas e memoráveis, oferecendo perfumes de alta qualidade que expressem a personalidade e estilo de cada cliente.</p>
                 </div>
                 <div class="value-card fade-in">
-                    <div class="value-icon">I</div>
-                    <h3>Inovação</h3>
+                    <div class="value-icon">V</div>
+                    <h3>Visão</h3>
                     <p>Ser reconhecida como a principal referência em perfumaria no Brasil, inovando constantemente e mantendo a excelência em produtos e atendimento.</p>
                 </div>
                 <div class="value-card fade-in">
