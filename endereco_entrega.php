@@ -957,45 +957,7 @@ if (!empty($usuario['estado'])) {
     </section>
     
     <footer>
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-column">
-                    <h3>CONTATO</h3>
-                    <div class="contact-info">
-                        <p><i class="fas fa-envelope"></i> E-mail: contatolavelle@gmail.com</p>
-                        <p><i class="fas fa-map-marker-alt"></i> Endereço: Rua das Fragrâncias, 123 - Jardim Perfumado</p>
-                    </div>
-                </div>
-                <div class="footer-column">
-                    <h3>REDES SOCIAIS</h3>
-                    <div class="social-links">
-                        <a href="#"><i class="fab fa-facebook"></i> Facebook</a><br>
-                        <a href="#"><i class="fab fa-instagram"></i> Instagram</a><br>
-                        <a href="#"><i class="fab fa-twitter"></i> Twitter</a>
-                    </div>
-                </div>
-                <div class="footer-column">
-                    <h3>POLÍTICAS</h3>
-                    <ul>
-                        <li><a href="#"><i class="fas fa-shield-alt"></i> Política de Privacidade</a></li>
-                        <li><a href="#"><i class="fas fa-file-contract"></i> Termos de Uso</a></li>
-                        <li><a href="#"><i class="fas fa-exchange-alt"></i> Trocas e Devoluções</a></li>
-                    </ul>
-                </div>
-                <div class="footer-column">
-                    <h3>INFORMAÇÕES</h3>
-                    <ul>
-                        <li><a href="sobre.php"><i class="fas fa-info-circle"></i> Sobre Nós</a></li>
-                        <li><a href="#"><i class="fas fa-history"></i> Nossa História</a></li>
-                        <li><a href="#"><i class="fas fa-briefcase"></i> Trabalhe Conosco</a></li>
-                        <li><a href="#"><i class="fas fa-question-circle"></i> FAQ</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="copyright">
-                <p>&copy; <?php echo date('Y'); ?> LAVELLE Perfumes. Todos os direitos reservados.</p>
-            </div>
-        </div>
+      <?php include 'footer.php'; ?>
     </footer>
 
     <script>
