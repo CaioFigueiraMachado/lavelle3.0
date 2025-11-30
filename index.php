@@ -31,7 +31,7 @@ $produtos = [
         "imagem" => "img/Lavelle Horizon.png"
     ],
     [
-        "nome" => "Lavelle Rose Sublime",
+        "nome" => "Lavelle Amour",
         "preco" => "R$ 279,90",
         "imagem" => "img/Lavelle Rose Sublime.jpg"
     ],
@@ -212,8 +212,7 @@ $destaques = [
         
         /* Seção de Boas-vindas */
         .user-welcome {
-            background: linear-gradient(135deg, #8b7355 0%, #000 100%);
-            color: white;
+            
             padding: 40px 0;
         }
 

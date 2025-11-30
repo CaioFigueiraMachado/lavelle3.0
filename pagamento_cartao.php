@@ -1,15 +1,112 @@
 <?php
 session_start();
+include 'conexao.php';
 
-// Verificar se a variável de sessão existe
-if (isset($_SESSION['total_compra'])) {
-    $total_compra = $_SESSION['total_compra'];
-} else {
+// Verificar se o usuário está logado
+if (!isset($_SESSION['id'])) {
+    header('Location: login.php');
+    exit();
+}
+
+// Verificar se existe carrinho e total
+if (!isset($_SESSION['total_compra']) || !isset($_SESSION['produtos_carrinho']) || empty($_SESSION['produtos_carrinho'])) {
+    header('Location: paginaprodutos.php');
+    exit();
+}
+
+// Verificar se há endereço de entrega
+if (!isset($_SESSION['endereco_entrega'])) {
+    header('Location: endereco_entrega.php');
+    exit();
+}
+
+// Obter o total da compra
+$total_compra = $_SESSION['total_compra'];
+
+// Verificar se o total é válido
+if ($total_compra <= 0) {
     $total_compra = 0;
+    if (isset($_SESSION['produtos_carrinho'])) {
+        foreach ($_SESSION['produtos_carrinho'] as $item) {
+            $total_compra += $item['subtotal'];
+        }
+    }
+    
+    if ($total_compra <= 0) {
+        header('Location: paginaprodutos.php');
+        exit();
+    }
 }
 
 $tipo_cartao = isset($_GET['tipo']) ? $_GET['tipo'] : 'credito';
-$tipo_nome = $tipo_cartao == 'credito' ? 'CRÉDITO' : 'Débito';
+$tipo_nome = $tipo_cartao == 'credito' ? 'CRÉDITO' : 'DÉBITO';
+
+// Processar confirmação de pagamento
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirmar_pagamento'])) {
+    if (processarPedidoAposPagamento($con, 'cartao_' . $tipo_cartao)) {
+        // Limpar dados da sessão relacionados ao pedido atual
+        unset($_SESSION['carrinho']);
+        unset($_SESSION['produtos_carrinho']);
+        unset($_SESSION['endereco_entrega']);
+        unset($_SESSION['total_compra']);
+        unset($_SESSION['itens_carrinho']);
+        unset($_SESSION['metodo_pagamento']);
+        
+        echo json_encode(['success' => true, 'message' => 'Pagamento confirmado com sucesso!']);
+        exit;
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Erro ao processar pedido.']);
+        exit;
+    }
+}
+
+function processarPedidoAposPagamento($db, $metodo_pagamento) {
+    try {
+        // Preparar endereço para salvar no banco
+        $endereco_entrega = $_SESSION['endereco_entrega'];
+        $endereco_completo = $endereco_entrega['logradouro'] . ', ' . $endereco_entrega['numero'];
+        if (!empty($endereco_entrega['complemento'])) {
+            $endereco_completo .= ' - ' . $endereco_entrega['complemento'];
+        }
+        $endereco_completo .= ' - ' . $endereco_entrega['bairro'] . ' - ' . $endereco_entrega['cidade'] . '/' . $endereco_entrega['estado'] . ' - CEP: ' . $endereco_entrega['cep'];
+        
+        // Inserir pedido no banco de dados
+        $stmt = $db->prepare("
+            INSERT INTO pedidos (usuario_id, data_pedido, total, status, metodo_pagamento, endereco_entrega) 
+            VALUES (?, NOW(), ?, 'pendente', ?, ?)
+        ");
+        
+        $stmt->execute([
+            $_SESSION['id'],
+            $_SESSION['total_compra'],
+            $metodo_pagamento,
+            $endereco_completo
+        ]);
+        
+        $pedido_id = $db->lastInsertId();
+        
+        // Inserir itens do pedido
+        foreach ($_SESSION['produtos_carrinho'] as $produto_id => $item) {
+            $stmt = $db->prepare("
+                INSERT INTO pedido_itens (pedido_id, produto_id, quantidade, preco_unitario, subtotal) 
+                VALUES (?, ?, ?, ?, ?)
+            ");
+            $stmt->execute([
+                $pedido_id,
+                $produto_id,
+                $item['quantidade'],
+                $item['produto']['preco'],
+                $item['subtotal']
+            ]);
+        }
+        
+        return $pedido_id;
+        
+    } catch(PDOException $e) {
+        error_log("Erro ao salvar pedido: " . $e->getMessage());
+        return false;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -18,13 +115,13 @@ $tipo_nome = $tipo_cartao == 'credito' ? 'CRÉDITO' : 'Débito';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pagamento Cartão - LAVELLE</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- SweetAlert2 CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Montserrat', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
         body {
@@ -32,7 +129,6 @@ $tipo_nome = $tipo_cartao == 'credito' ? 'CRÉDITO' : 'Débito';
             color: #333;
             line-height: 1.6;
             min-height: 100vh;
-            font-family: 'Montserrat', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             flex-direction: column;
         }
@@ -512,8 +608,6 @@ $tipo_nome = $tipo_cartao == 'credito' ? 'CRÉDITO' : 'Débito';
         LAVELLE &copy; 2025 - Todos os direitos reservados
     </div>
 
-    <!-- SweetAlert2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
     <script>
         function formatCardNumber(input) {
             let value = input.value.replace(/\D/g, '');
@@ -636,29 +730,49 @@ $tipo_nome = $tipo_cartao == 'credito' ? 'CRÉDITO' : 'Débito';
                     // Mostrar loading
                     document.getElementById('loadingOverlay').style.display = 'flex';
                     
-                    // Simular processamento
-                    setTimeout(() => {
+                    // Enviar requisição para o servidor
+                    fetch('pagamento_cartao.php?tipo=<?php echo $tipo_cartao; ?>', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: 'confirmar_pagamento=true'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
                         document.getElementById('loadingOverlay').style.display = 'none';
                         
-                        // SweetAlert2 de sucesso
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Pagamento Confirmado!',
+                                text: 'Obrigado pela preferência. Você será redirecionado para a página inicial.',
+                                icon: 'success',
+                                confirmButtonText: 'OK',
+                                confirmButtonColor: '#32b572',
+                                timer: 3000,
+                                timerProgressBar: true
+                            }).then(() => {
+                                window.location.href = 'index.php';
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Erro no Pagamento',
+                                text: data.message || 'Ocorreu um erro ao processar seu pagamento.',
+                                icon: 'error',
+                                confirmButtonColor: '#8b7355'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        document.getElementById('loadingOverlay').style.display = 'none';
+                        console.error('Erro:', error);
                         Swal.fire({
-                            title: 'Pagamento Confirmado!',
-                            text: 'Obrigado pela preferência. Você será redirecionado para a página inicial.',
-                            icon: 'success',
-                            confirmButtonText: 'OK',
-                            confirmButtonColor: '#32b572',
-                            timer: 3000,
-                            timerProgressBar: true
-                        }).then(() => {
-                            // Redirecionar para index.php
-                            window.location.href = 'index.php';
+                            title: 'Erro de Conexão',
+                            text: 'Não foi possível processar o pagamento. Tente novamente.',
+                            icon: 'error',
+                            confirmButtonColor: '#8b7355'
                         });
-                        
-                        // Redirecionar automaticamente após 3 segundos
-                        setTimeout(() => {
-                            window.location.href = 'index.php';
-                        }, 3000);
-                    }, 2000);
+                    });
                 }
             });
         }
@@ -668,59 +782,6 @@ $tipo_nome = $tipo_cartao == 'credito' ? 'CRÉDITO' : 'Débito';
         document.addEventListener('DOMContentLoaded', function() {
             generateInstallments();
         });
-        // Após o pagamento ser confirmado, adicione:
-function processarPedidoAposPagamento($db, $metodo_pagamento) {
-    try {
-        // Inserir pedido no banco de dados
-        $stmt = $db->prepare("
-            INSERT INTO pedidos (usuario_id, data_pedido, total, status, metodo_pagamento, endereco_entrega) 
-            VALUES (?, NOW(), ?, 'pendente', ?, ?)
-        ");
-        
-        $stmt->execute([
-            $_SESSION['id'],
-            $_SESSION['total_compra'],
-            $metodo_pagamento,
-            $_SESSION['endereco_entrega']
-        ]);
-        
-        $pedido_id = $db->lastInsertId();
-        
-        // Inserir itens do pedido
-        foreach ($_SESSION['produtos_carrinho'] as $produto_id => $item) {
-            $stmt = $db->prepare("
-                INSERT INTO pedido_itens (pedido_id, produto_id, quantidade, preco_unitario, subtotal) 
-                VALUES (?, ?, ?, ?, ?)
-            ");
-            $stmt->execute([
-                $pedido_id,
-                $produto_id,
-                $item['quantidade'],
-                $item['produto']['preco'],
-                $item['subtotal']
-            ]);
-        }
-        
-        // Gerar comprovante automaticamente
-        require_once 'receipt_generator.php';
-        $receiptGenerator = new ReceiptGenerator();
-        $filename = $receiptGenerator->generateReceipt($pedido_id, $db);
-        
-        // Limpar carrinho
-        unset($_SESSION['carrinho']);
-        unset($_SESSION['produtos_carrinho']);
-        unset($_SESSION['endereco_entrega']);
-        unset($_SESSION['total_compra']);
-        unset($_SESSION['itens_carrinho']);
-        unset($_SESSION['metodo_pagamento']);
-        
-        return $pedido_id;
-        
-    } catch(PDOException $e) {
-        error_log("Erro ao salvar pedido: " . $e->getMessage());
-        return false;
-    }
-}
         <?php endif; ?>
     </script>
 </body>

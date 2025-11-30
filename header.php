@@ -20,13 +20,13 @@ if (!isset($usuarioLogado)) {
             font-style: normal;
         }
         
-        /* Estilos do header */
+        /* Header */
         header {
             background-color: #fff;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             position: sticky;
             top: 0;
-            z-index: 1000;
+            z-index: 100;
         }
         
         .container {
@@ -45,9 +45,10 @@ if (!isset($usuarioLogado)) {
         .logo {
             font-family: 'Questal Small Caps Medium', serif;
             font-size: 28px;
-            color: #000000ff;
+            font-weight: bold;
+            color: #000;
+            letter-spacing: 2px;
             text-decoration: none;
-            letter-spacing: 1px;
         }
         
         nav ul {
@@ -56,88 +57,296 @@ if (!isset($usuarioLogado)) {
             align-items: center;
         }
         
-        nav li {
-            margin-left: 25px;
+        nav ul li {
+            margin-left: 20px;
+            position: relative;
         }
         
-        nav a {
+        nav ul li a {
             text-decoration: none;
-            color: #333;
+            color: #000;
             font-weight: 500;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
             transition: color 0.3s;
+            font-size: 14px;
+            padding: 8px 12px;
+            border-radius: 5px;
         }
         
-        nav a:hover {
+        nav ul li a:hover {
             color: #8b7355;
         }
         
         .user-menu {
             display: flex;
             align-items: center;
+            gap: 15px;
+            margin-left: 20px;
+            padding-left: 20px;
+            border-left: 1px solid #eee;
         }
         
-        .user-menu span {
-            margin-right: 15px;
+        .user-menu a.profile-link {
+            background-color: #f5f5f5;
+            color: #8b7355;
         }
         
-        .profile-link {
-            color: #8b7355 !important;
+        .user-menu a.profile-link:hover {
+            background-color: #8b7355;
+            color: white;
         }
-         .header-banner {
-                background-color: #000;
-    color: #ffffff;
-    text-align: center;
-    padding: 8px 0;
-    font-size: 14px;
-    font-weight: 300;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    border-bottom: 1px solid #333;
+        
+        /* Hamburguer Icon - Mobile */
+        .hamburguer {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 5px;
+            background: none;
+            border: none;
+            width: 30px;
+            height: 30px;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .hamburguer span {
+            width: 25px;
+            height: 2px;
+            background: #333;
+            margin: 2px 0;
+            transition: 0.3s;
+            display: block;
+        }
+        
+        /* Menu Mobile */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            z-index: 99;
+            padding: 80px 20px 20px;
+            overflow-y: auto;
+        }
+        
+        .mobile-nav.active {
+            display: block;
+        }
+        
+        .mobile-nav ul {
+            list-style: none;
+            flex-direction: column;
+        }
+        
+        .mobile-nav li {
+            margin: 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .mobile-nav a {
+            display: block;
+            padding: 15px 0;
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 0;
+        }
+        
+        .mobile-nav a:hover {
+            color: #8b7355;
+            background: none;
+        }
+        
+        .mobile-user-menu {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+        
+        .user-welcome {
+            display: block;
+            padding: 15px 0;
+            color: #8b7355;
+            font-weight: 600;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        /* Animações do Hamburguer */
+        .hamburguer.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+        
+        .hamburguer.active span:nth-child(2) {
+            opacity: 0;
+        }
+        
+        .hamburguer.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -6px);
+        }
+        
+        /* Header Banner */
+        .header-banner {
+            background-color: #000;
+            color: #ffffff;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 14px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #333;
         }
         
         .header-banner h1 {
-           
             font-size: 14px;
-            font-weight: 400;
+            font-weight: 300;
             margin: 0;
             padding: 0;
             letter-spacing: 3px;
             color: #f5f5f5;
         }
+        
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .desktop-nav {
+                display: none;
+            }
+            
+            .hamburguer {
+                display: flex;
+            }
+            
+            .header-top {
+                justify-content: space-between;
+            }
+            
+            nav ul {
+                margin-top: 15px;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            nav ul li {
+                margin: 5px 8px;
+            }
+            
+            .user-menu {
+                margin-left: 0;
+                padding-left: 0;
+                border-left: none;
+                justify-content: center;
+                width: 100%;
+                margin-top: 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 15px;
+            }
+            
+            .logo {
+                font-size: 24px;
+            }
+        }
     </style>
-        <div class="container">
-            <div class="header-top">
-                <div class="logo"><?php echo $empresa ?? 'LAVELLE'; ?></div>
-                <nav>
-                    <ul>
-                        <li><a href="index.php">INÍCIO</a></li>
-                        <li><a href="paginaprodutos.php">PRODUTOS</a></li>
-                       
-                        <li><a href="sobre.php">SOBRE</a></li>
-                        <li><a href="contato.php">CONTATO</a></li>
-                        
-                        <!-- Menu do Usuário - CORRIGIDO -->
-                        <?php if ($usuarioLogado): ?>
-                            <div class="user-menu">
-                                <span style="color: #8b7355; font-weight: 500;">Olá, <?php echo htmlspecialchars($usuarioNome); ?></span>
-                                <li><a href="perfil.php" class="profile-link">MEU PERFIL</a></li>
-                                
-                                <!-- LINK ADM - APENAS PARA ADMINISTRADOR -->
-                          
-                                
-                                <li><a href="logout.php">SAIR</a></li>
-                            </div>
-                        <?php else: ?>
-                            <div class="user-menu">
-                                <li><a href="login.php">ENTRAR</a></li>
-                              
-                            </div>
-                        <?php endif; ?>
-                    </ul>
-                </nav>
-            </div>
+
+    <!-- Header Banner -->
+
+    <div class="container">
+        <div class="header-top">
+            <div class="logo"><?php echo $empresa ?? 'LAVELLE'; ?></div>
+            
+            <!-- Menu Desktop -->
+            <nav class="desktop-nav">
+                <ul>
+                    <li><a href="index.php">INÍCIO</a></li>
+                    <li><a href="paginaprodutos.php">PRODUTOS</a></li>
+                    <li><a href="sobre.php">SOBRE</a></li>
+                    <li><a href="contato.php">CONTATO</a></li>
+                    
+                    <?php if ($usuarioLogado): ?>
+                        <div class="user-menu">
+                            <span style="color: #8b7355; font-weight: 500;">Olá, <?php echo htmlspecialchars($usuarioNome); ?></span>
+                            <li><a href="perfil.php" class="profile-link">MEU PERFIL</a></li>
+                            <li><a href="logout.php">SAIR</a></li>
+                        </div>
+                    <?php else: ?>
+                        <div class="user-menu">
+                            <li><a href="login.php">ENTRAR</a></li>
+                        </div>
+                    <?php endif; ?>
+                </ul>
+            </nav>
+            
+            <!-- Hamburguer Menu -->
+            <button class="hamburguer" id="hamburguer">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
         </div>
-    </header>
+    </div>
+
+    <!-- Menu Mobile -->
+    <nav class="mobile-nav" id="mobileNav">
+        <ul>
+            <li><a href="index.php">INÍCIO</a></li>
+            <li><a href="paginaprodutos.php">PRODUTOS</a></li>
+            <li><a href="sobre.php">SOBRE</a></li>
+            <li><a href="contato.php">CONTATO</a></li>
+            
+            <?php if ($usuarioLogado): ?>
+                <div class="mobile-user-menu">
+                    <li class="user-welcome">Olá, <?php echo htmlspecialchars($usuarioNome); ?></li>
+                    <li><a href="perfil.php">MEU PERFIL</a></li>
+                    <li><a href="logout.php">SAIR</a></li>
+                </div>
+            <?php else: ?>
+                <li><a href="login.php">ENTRAR</a></li>
+            <?php endif; ?>
+        </ul>
+    </nav>
+</header>
+
+<script>
+    const hamburguer = document.getElementById('hamburguer');
+    const mobileNav = document.getElementById('mobileNav');
+    
+    hamburguer.addEventListener('click', function() {
+        this.classList.toggle('active');
+        mobileNav.classList.toggle('active');
+        
+        // Impede o scroll do body quando o menu está aberto
+        if (mobileNav.classList.contains('active')) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'auto';
+        }
+    });
+    
+    // Fecha o menu quando clicar em um link
+    const mobileLinks = mobileNav.querySelectorAll('a');
+    mobileLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            hamburguer.classList.remove('active');
+            mobileNav.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        });
+    });
+    
+    // Fecha o menu quando redimensionar para desktop
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+            hamburguer.classList.remove('active');
+            mobileNav.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    });
+</script>

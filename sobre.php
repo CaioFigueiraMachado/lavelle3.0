@@ -841,7 +841,7 @@ if (isset($_SESSION['usuario_id']) || isset($_SESSION['id'])) {
                 </div>
                 <div class="team-member fade-in">
                     <div class="member-photo">
-                        <img src="img/ana.png" alt="Ana Victoria">
+                        <img src="img/anaprof.jpeg" alt="Ana Victoria">
                     </div>
                     <h3>Ana Victória</h3>
                     <div class="role">DESIGNER DE PRODUTOS</div>
