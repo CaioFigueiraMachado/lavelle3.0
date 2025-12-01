@@ -15,8 +15,8 @@ $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'];
 
 // Definindo dados para a página
 $empresa = "LAVELLE";
-$slogan = "O perfume certo transforma a presença em memória.";
-$descricao = "Descubra fragrâncias únicas e inesquecíveis";
+$slogan = "Desperte seus sentidos com nossas fragrâncias exclusivas.";
+$descricao = "Descubra essências únicas e inesquecíveis";
 
 // Produtos em destaque
 $produtos = [
@@ -52,7 +52,7 @@ $categorias = [
     ],
     [
         "nome" => "Fragrâncias Compartilháveis",
-        "imagem" => "img/lavellegolden.jpg",
+        "imagem" => "img/compartilhaveis.png",
         "link" => "paginaprodutos.php?categoria=Compartilhável"
     ]
 ];

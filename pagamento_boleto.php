@@ -710,10 +710,10 @@ function processarPedidoAposPagamento($db, $metodo_pagamento) {
                                     </div>
                                 `,
                                 icon: 'success',
-                                confirmButtonText: 'Ir para Meus Pedidos',
+                                confirmButtonText: 'Você será redirecionado para a homepage',
                                 confirmButtonColor: '#8b7355'
                             }).then(() => {
-                                window.location.href = 'perfil.php?tab=pedidos';
+                                window.location.href = 'index.php';
                             });
                         } else {
                             Swal.fire({

@@ -293,120 +293,8 @@ if (isset($_SESSION['usuario_id']) || isset($_SESSION['id'])) {
             font-size: 14px;
         }
         
-        /* Values Section */
-        .values-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-        }
-        
-        .value-card {
-            background-color: white;
-            border-radius: 10px;
-            padding: 40px 30px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            transition: transform 0.3s, box-shadow 0.3s;
-            border-top: 4px solid #8b7355;
-        }
-        
-        .value-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
-        }
-        
-        .value-icon {
-            width: 70px;
-            height: 70px;
-            margin: 0 auto 25px;
-            background-color: #f9f5f0;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: #8b7355;
-            font-weight: bold;
-        }
-        
-        .value-card h3 {
-            font-size: 22px;
-            margin-bottom: 15px;
-            color: #000;
-            font-weight: 600;
-        }
-        
-        .value-card p {
-            color: #666;
-            line-height: 1.6;
-        }
-        
-        /* Team Section */
-        .team-section {
-            background-color: #f5f5f5;
-        }
-        
-        .team-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 30px;
-        }
-        
-        .team-member {
-            background-color: white;
-            border-radius: 10px;
-            padding: 30px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            transition: transform 0.3s;
-        }
-        
-        .team-member:hover {
-            transform: translateY(-10px);
-        }
-        
-        .member-photo {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            margin: 0 auto 20px;
-            overflow: hidden;
-            border: 3px solid #8b7355;
-        }
-        
-        .member-photo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .team-member h3 {
-            font-size: 20px;
-            margin-bottom: 5px;
-            color: #000;
-        }
-        
-        .team-member .role {
-            color: #8b7355;
-            font-style: italic;
-            margin-bottom: 15px;
-            font-size: 14px;
-        }
-        
-        .team-member p {
-            color: #666;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-        
-        /* Process Section - CARDS ESTILIZADOS */
-        .process-steps {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
-        }
-        
-        .process-step {
+        /* Cards Padronizados - Estilo Process-Step */
+        .value-card, .team-member, .process-step, .testimonial {
             background-color: white;
             border-radius: 15px;
             padding: 40px 30px;
@@ -420,8 +308,12 @@ if (isset($_SESSION['usuario_id']) || isset($_SESSION['id'])) {
             align-items: center;
             height: 100%;
         }
-        
-        .process-step::before {
+
+        /* Linha decorativa no topo */
+        .value-card::before,
+        .team-member::before,
+        .process-step::before,
+        .testimonial::before {
             content: '';
             position: absolute;
             top: 0;
@@ -430,12 +322,176 @@ if (isset($_SESSION['usuario_id']) || isset($_SESSION['id'])) {
             height: 5px;
             background: linear-gradient(90deg, #8b7355, #d4b896);
         }
-        
-        .process-step:hover {
+
+        /* Efeito hover padronizado */
+        .value-card:hover,
+        .team-member:hover,
+        .process-step:hover,
+        .testimonial:hover {
             transform: translateY(-15px);
             box-shadow: 0 20px 40px rgba(0,0,0,0.15);
         }
-        
+
+        /* Título dos cards */
+        .value-card h3,
+        .team-member h3,
+        .process-step h3,
+        .testimonial .testimonial-author {
+            font-size: 22px;
+            margin-bottom: 20px;
+            color: #000;
+            font-weight: 600;
+            position: relative;
+            padding-bottom: 15px;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* Linha decorativa abaixo do título */
+        .value-card h3::after,
+        .team-member h3::after,
+        .process-step h3::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 2px;
+            background: #8b7355;
+        }
+
+        /* Texto dos cards */
+        .value-card p,
+        .team-member p,
+        .process-step p,
+        .testimonial-text {
+            color: #666;
+            line-height: 1.7;
+            font-size: 15px;
+            margin-top: auto;
+            width: 100%;
+        }
+
+        /* Ajustes específicos para testimonials */
+        .testimonial::before {
+            content: '"';
+            font-size: 60px;
+            color: #8b7355;
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            line-height: 1;
+            font-family: Georgia, serif;
+            height: auto;
+            width: auto;
+            background: none;
+        }
+
+        .testimonial {
+            text-align: left;
+            align-items: flex-start;
+        }
+
+        .testimonial-text {
+            font-style: italic;
+            padding-top: 20px;
+            margin-bottom: 25px;
+        }
+
+        .testimonial-author {
+            padding-bottom: 5px !important;
+        }
+
+        .testimonial-author::after {
+            display: none;
+        }
+
+        .testimonial-rating {
+            color: #ffd700;
+            font-size: 18px;
+            margin-top: 10px;
+        }
+
+        /* Ajustes para value-card */
+        .value-card {
+            padding-top: 50px;
+        }
+
+        .value-icon {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 25px;
+            background: linear-gradient(135deg, #8b7355, #d4b896);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(139, 115, 85, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .value-card:hover .value-icon,
+        .team-member:hover .member-photo,
+        .process-step:hover .step-number {
+            transform: scale(1.1);
+            box-shadow: 0 8px 20px rgba(139, 115, 85, 0.4);
+        }
+
+        /* Ajustes para team-member - CARDS MENORES */
+        .team-member {
+            padding: 30px 20px;
+            padding-top: 40px;
+        }
+
+        .member-photo {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            overflow: hidden;
+            border: 3px solid #8b7355;
+            transition: all 0.3s ease;
+        }
+
+        .member-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .team-member:hover .member-photo img {
+            transform: scale(1.05);
+        }
+
+        .team-member h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+        }
+
+        .team-member h3::after {
+            width: 40px;
+        }
+
+        .team-member .role {
+            color: #8b7355;
+            font-style: italic;
+            margin-bottom: 15px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .team-member p {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* Ajustes para process-step */
         .step-number {
             width: 70px;
             height: 70px;
@@ -451,81 +507,21 @@ if (isset($_SESSION['usuario_id']) || isset($_SESSION['id'])) {
             box-shadow: 0 5px 15px rgba(139, 115, 85, 0.3);
             transition: all 0.3s ease;
         }
-        
-        .process-step:hover .step-number {
-            transform: scale(1.1);
-            box-shadow: 0 8px 20px rgba(139, 115, 85, 0.4);
-        }
-        
-        .process-step h3 {
-            font-size: 22px;
-            margin-bottom: 20px;
-            color: #000;
-            font-weight: 600;
-            position: relative;
-            padding-bottom: 15px;
-        }
-        
-        .process-step h3::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 50px;
-            height: 2px;
-            background: #8b7355;
-        }
-        
-        .process-step p {
-            color: #666;
-            line-height: 1.7;
-            font-size: 15px;
-            margin-top: auto;
-        }
-        
-        /* Testimonials Section */
+
+        /* Grids responsivos */
+        .values-grid,
+        .team-grid,
+        .process-steps,
         .testimonials-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 30px;
         }
         
-        .testimonial {
-            background-color: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            position: relative;
-        }
-        
-        .testimonial::before {
-            content: '"';
-            font-size: 60px;
-            color: #8b7355;
-            position: absolute;
-            top: 10px;
-            left: 20px;
-            line-height: 1;
-        }
-        
-        .testimonial-text {
-            color: #666;
-            font-style: italic;
-            margin-bottom: 20px;
-            padding-top: 10px;
-            line-height: 1.6;
-        }
-        
-        .testimonial-author {
-            color: #000;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .testimonial-rating {
-            color: #ffd700;
-            font-size: 16px;
+        /* Team grid com cards menores - mais cards por linha */
+        .team-grid {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
         }
         
         /* Footer */
@@ -643,8 +639,50 @@ if (isset($_SESSION['usuario_id']) || isset($_SESSION['id'])) {
                 padding-left: 20px;
             }
             
-            .process-step {
+            .value-card, .process-step, .testimonial {
                 padding: 30px 20px;
+            }
+            
+            .value-card {
+                padding-top: 40px;
+            }
+            
+            .value-icon,
+            .step-number {
+                width: 60px;
+                height: 60px;
+                font-size: 20px;
+                margin-bottom: 20px;
+            }
+            
+            .team-member {
+                padding: 25px 15px;
+                padding-top: 35px;
+            }
+            
+            .member-photo {
+                width: 80px;
+                height: 80px;
+                margin-bottom: 12px;
+            }
+            
+            .team-member h3 {
+                font-size: 18px;
+                margin-bottom: 8px;
+                padding-bottom: 8px;
+            }
+            
+            .team-member h3::after {
+                width: 35px;
+            }
+            
+            .team-member .role {
+                font-size: 13px;
+                margin-bottom: 12px;
+            }
+            
+            .team-member p {
+                font-size: 13px;
             }
         }
         
@@ -661,18 +699,29 @@ if (isset($_SESSION['usuario_id']) || isset($_SESSION['id'])) {
                 font-size: 28px;
             }
             
-            .value-card, .team-member, .testimonial {
-                padding: 20px;
-            }
-            
-            .process-step {
+            .value-card, .process-step, .testimonial {
                 padding: 25px 15px;
             }
             
-            .step-number {
-                width: 60px;
-                height: 60px;
-                font-size: 20px;
+            .values-grid,
+            .process-steps,
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .team-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .team-member {
+                padding: 20px 15px;
+                padding-top: 30px;
+            }
+            
+            .member-photo {
+                width: 70px;
+                height: 70px;
             }
         }
         
@@ -691,6 +740,7 @@ if (isset($_SESSION['usuario_id']) || isset($_SESSION['id'])) {
         .fade-in {
             animation: fadeInUp 0.8s ease-out;
         }
+        
         /* Header Banner */
         .header-banner {
             background-color: #000;
@@ -782,9 +832,6 @@ if (isset($_SESSION['usuario_id']) || isset($_SESSION['id'])) {
                         <p>Desenvolvimento da primeira linha de perfumes exclusivos Lavelle, criada por perfumistas renomados.</p>
                     </div>
                 </div>
-                
-                   
-                </div>
             </div>
         </div>
     </section>
@@ -809,11 +856,11 @@ if (isset($_SESSION['usuario_id']) || isset($_SESSION['id'])) {
                     <h3>Qualidade</h3>
                     <p>Compromisso inabalável com a qualidade em todos os aspectos: desde a seleção de fornecedores até o atendimento ao cliente final.</p>
                 </div>
-                
+            </div>
         </div>
     </section>
 
-    <!-- Team Section -->
+    <!-- Team Section - CARDS MENORES -->
     <section class="section team-section">
         <div class="container">
             <h2 class="section-title">Nossa Equipe</h2>
@@ -824,6 +871,7 @@ if (isset($_SESSION['usuario_id']) || isset($_SESSION['id'])) {
                     </div>
                     <h3>Caio Machado</h3>
                     <div class="role">DEV TEAM</div>
+                    <p>Desenvolvedor especializado em front-end e experiência do usuário.</p>
                 </div>
                 <div class="team-member fade-in">
                     <div class="member-photo">
@@ -831,26 +879,29 @@ if (isset($_SESSION['usuario_id']) || isset($_SESSION['id'])) {
                     </div>
                     <h3>Lucas Henrique</h3>
                     <div class="role">DEV TEAM</div>
+                    <p>Desenvolvedor back-end e especialista em banco de dados.</p>
                 </div>
                 <div class="team-member fade-in">
                     <div class="member-photo">
-                        <img src="img/sophiaruiz.png" alt="Sophia Ruiz">
+                        <img src="img/sophiaprof2.jpg" alt="Sophia Ruiz">
                     </div>
                     <h3>Sophia Ruiz</h3>
                     <div class="role">SCRUM MASTER</div>
+                    <p>Gerencia processos ágeis e coordena a equipe de desenvolvimento.</p>
                 </div>
                 <div class="team-member fade-in">
                     <div class="member-photo">
-                        <img src="img/anaprof.jpeg" alt="Ana Victoria">
+                        <img src="img/anaprof2.jpg" alt="Ana Victoria">
                     </div>
                     <h3>Ana Victória</h3>
                     <div class="role">DESIGNER DE PRODUTOS</div>
+                    <p>Cria designs inovadores e experiências visuais únicas.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Process Section - CARDS ESTILIZADOS -->
+    <!-- Process Section -->
     <section class="section">
         <div class="container">
             <h2 class="section-title">Nosso Processo de Criação</h2>
@@ -870,7 +921,6 @@ if (isset($_SESSION['usuario_id']) || isset($_SESSION['id'])) {
                     <h3>Testes de Qualidade</h3>
                     <p>Realizamos rigorosos testes de qualidade, durabilidade e segurança, garantindo que cada fragrância atenda aos mais altos padrões.</p>
                 </div>
-               
             </div>
         </div>
     </section>

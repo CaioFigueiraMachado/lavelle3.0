@@ -1,5 +1,5 @@
 <?php
-// admin/pedido_detalhes.php - VERSÃO CORRIGIDA
+// admin/pedido_detalhes.php - VERSÃO COM SWEETALERT
 session_start();
 if(!isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) {
     header("Location: ../index.php");
@@ -324,7 +324,7 @@ include 'includes/sidebar.php';
                         </div>
                     </div>
                     <?php endforeach; ?>
-                </div>
+                    </div>
             </div>
         </div>
         <?php endif; ?>
@@ -337,7 +337,7 @@ include 'includes/sidebar.php';
             <div class="card-body">
                 <div class="actions-grid">
                     <!-- Alterar Status -->
-                    <form method="POST" class="action-form">
+                    <form method="POST" class="action-form" id="statusForm">
                         <div class="form-group">
                             <label for="novo_status">Alterar Status:</label>
                             <select name="novo_status" id="novo_status" class="status-select" required>
@@ -355,7 +355,7 @@ include 'includes/sidebar.php';
                                 A observação será salva no histórico do pedido.
                             </small>
                         </div>
-                        <button type="submit" name="alterar_status" class="btn-primary">
+                        <button type="submit" name="alterar_status" class="btn-primary" id="btnAlterarStatus">
                             <i class="fas fa-sync"></i> Atualizar Status
                         </button>
                     </form>
@@ -373,8 +373,8 @@ include 'includes/sidebar.php';
                                 </a>
                             <?php else: ?>
                                 <p class="form-help">Gere um comprovante em PDF do pedido.</p>
-                                <form method="POST" style="display: inline;">
-                                    <button type="submit" name="gerar_comprovante" class="btn-primary">
+                                <form method="POST" style="display: inline;" id="comprovanteForm">
+                                    <button type="submit" name="gerar_comprovante" class="btn-primary" id="btnGerarComprovante">
                                         <i class="fas fa-file-pdf"></i> Gerar Comprovante
                                     </button>
                                 </form>
@@ -390,7 +390,7 @@ include 'includes/sidebar.php';
                         </div>
                         <a href="pedidos.php?excluir_pedido=<?php echo $pedido_id; ?>" 
                            class="btn-danger"
-                           onclick="return confirm('Tem certeza que deseja excluir este pedido? Esta ação é irreversível!')">
+                           id="btnExcluirPedido">
                             <i class="fas fa-trash"></i> Excluir Pedido
                         </a>
                     </div>
@@ -671,29 +671,182 @@ textarea {
 }
 </style>
 
+<!-- Incluir SweetAlert 2 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
-// Confirmação antes de alterar status
 document.addEventListener('DOMContentLoaded', function() {
-    const statusForm = document.querySelector('form[method="POST"]');
+    // Configurar alertas das mensagens de sessão com SweetAlert
+    <?php if(isset($_SESSION['mensagem_sucesso'])): ?>
+    Swal.fire({
+        icon: 'success',
+        title: 'Sucesso!',
+        text: '<?php echo addslashes($_SESSION['mensagem_sucesso']); ?>',
+        timer: 3000,
+        showConfirmButton: true
+    });
+    <?php 
+        unset($_SESSION['mensagem_sucesso']); 
+    endif; 
+    ?>
     
-    if(statusForm) {
-        statusForm.addEventListener('submit', function(e) {
+    <?php if(isset($_SESSION['mensagem_erro'])): ?>
+    Swal.fire({
+        icon: 'error',
+        title: 'Erro!',
+        text: '<?php echo addslashes($_SESSION['mensagem_erro']); ?>',
+        timer: 4000,
+        showConfirmButton: true
+    });
+    <?php 
+        unset($_SESSION['mensagem_erro']); 
+    endif; 
+    ?>
+    
+    // Confirmação antes de alterar status com SweetAlert
+    const statusForm = document.getElementById('statusForm');
+    const btnAlterarStatus = document.getElementById('btnAlterarStatus');
+    
+    if(statusForm && btnAlterarStatus) {
+        btnAlterarStatus.addEventListener('click', function(e) {
+            e.preventDefault();
+            
             const novoStatus = document.getElementById('novo_status').value;
             const statusAtual = '<?php echo $pedido['status']; ?>';
+            const observacao = document.getElementById('observacao').value;
             
+            // Verificar se o status é o mesmo
             if(novoStatus === statusAtual) {
-                e.preventDefault();
-                alert('O status selecionado é o mesmo do atual. Por favor, selecione um status diferente.');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Atenção',
+                    text: 'O status selecionado é o mesmo do atual. Por favor, selecione um status diferente.',
+                    confirmButtonColor: '#8b7355',
+                });
                 return false;
             }
             
-            if(!confirm(`Deseja realmente alterar o status do pedido de "${statusAtual}" para "${novoStatus}"?`)) {
-                e.preventDefault();
-                return false;
+            // Configurar texto baseado no status
+            let statusText = '';
+            let iconType = 'question';
+            
+            switch(novoStatus) {
+                case 'cancelado':
+                    statusText = 'ATENÇÃO: Ao cancelar um pedido, esta ação pode não ser reversível.';
+                    iconType = 'warning';
+                    break;
+                case 'entregue':
+                    statusText = 'O pedido será marcado como ENTREGUE. Verifique se realmente foi entregue ao cliente.';
+                    iconType = 'success';
+                    break;
+                case 'enviado':
+                    statusText = 'O pedido será marcado como ENVIADO. Certifique-se de que o envio foi realizado.';
+                    iconType = 'info';
+                    break;
+                default:
+                    statusText = `Deseja realmente alterar o status do pedido de "${statusAtual}" para "${novoStatus}"?`;
+                    iconType = 'question';
             }
+            
+            // Adicionar observação ao texto se existir
+            if(observacao) {
+                statusText += `\n\nObservação: ${observacao}`;
+            }
+            
+            Swal.fire({
+                title: 'Confirmar Alteração de Status',
+                text: statusText,
+                icon: iconType,
+                showCancelButton: true,
+                confirmButtonText: 'Sim, alterar status',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#8b7355',
+                cancelButtonColor: '#6c757d',
+                showLoaderOnConfirm: true,
+                preConfirm: () => {
+                    // Enviar o formulário após confirmação
+                    return new Promise((resolve) => {
+                        statusForm.submit();
+                        resolve();
+                    });
+                }
+            });
+        });
+    }
+    
+    // Confirmação para gerar comprovante
+    const comprovanteForm = document.getElementById('comprovanteForm');
+    const btnGerarComprovante = document.getElementById('btnGerarComprovante');
+    
+    if(comprovanteForm && btnGerarComprovante) {
+        btnGerarComprovante.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            Swal.fire({
+                title: 'Gerar Comprovante',
+                text: 'Deseja gerar um comprovante em PDF deste pedido?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sim, gerar comprovante',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#8b7355',
+                cancelButtonColor: '#6c757d',
+                showLoaderOnConfirm: true,
+                preConfirm: () => {
+                    // Enviar o formulário após confirmação
+                    return new Promise((resolve) => {
+                        comprovanteForm.submit();
+                        resolve();
+                    });
+                }
+            });
+        });
+    }
+    
+    // Confirmação para excluir pedido
+    const btnExcluirPedido = document.getElementById('btnExcluirPedido');
+    
+    if(btnExcluirPedido) {
+        btnExcluirPedido.addEventListener('click', function(e) {
+            e.preventDefault();
+            const url = this.getAttribute('href');
+            
+            Swal.fire({
+                title: 'Excluir Pedido',
+                text: 'Tem certeza que deseja excluir este pedido? Esta ação é irreversível e todos os dados do pedido serão perdidos permanentemente!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sim, excluir pedido',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                reverseButtons: true,
+                customClass: {
+                    confirmButton: 'swal2-confirm-danger'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = url;
+                }
+            });
         });
     }
 });
+
+// Estilo personalizado para o botão de confirmar exclusão
+const style = document.createElement('style');
+style.textContent = `
+    .swal2-confirm-danger {
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+    }
+    .swal2-confirm-danger:hover {
+        background-color: #c82333 !important;
+        border-color: #bd2130 !important;
+    }
+`;
+document.head.appendChild(style);
 </script>
 
 <?php include 'includes/footer.php'; ?>
